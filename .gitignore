@@ -1,0 +1,17 @@
+.venv/
+venv/
+env/
+/bin/
+/lib/
+/lib64/
+/include/
+/share/
+pyvenv.cfg
+__pycache__/
+*.pyc
+
+.DS_Store
+Thumbs.db
+
+.vscode/
+.idea/
