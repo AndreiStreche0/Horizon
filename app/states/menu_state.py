@@ -44,7 +44,7 @@ class MenuState(arcade.View):
         if symbol == arcade.key.ENTER:
             print("User requested START game")
             #TODO: uncomment when play logic is done
-            # self.brain.set_state("PLAY")
+            self.brain.set_state("PLAY")
             
         elif symbol == arcade.key.ESCAPE:
             self.brain.quit_game()
