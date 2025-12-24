@@ -1,8 +1,11 @@
 import arcade
+import random
 from config import SCREEN_WIDTH, SCREEN_HEIGHT
 from app.entities.player import Player
 from app.map.loader import load_game_map
 from app.pve_logic.collision import PhysicsHandler
+from app.pve_logic.combat import CombatSystem
+from app.pve_logic.spawning import Spawner
 from app.ui.hud import HUD
 
 class PlayState(arcade.View):
@@ -12,7 +15,7 @@ class PlayState(arcade.View):
         self.player_list = arcade.SpriteList()
         self.enemy_list = arcade.SpriteList()
         #initializing player
-        self.player = Player(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
+        self.player = Player(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2, brain.player_base_damage)
         self.player_list.append(self.player)
 
         #loading map
@@ -24,8 +27,11 @@ class PlayState(arcade.View):
 
         #initializing physics logic
         self.physics_handler = PhysicsHandler(self.player, self.wall_list)
-        self.brain.physics_handler = self.physics_handler
 
+        #combat and spawner logic
+        self.combat_system = CombatSystem()
+        #the spawning base interval can be changed here
+        self.spawner = Spawner(self.tilemap.width, self.tilemap.height, self.player, 10)
         #initializing HUD
         self.hud = HUD()
         self.brain.hud = self.hud
@@ -37,23 +43,58 @@ class PlayState(arcade.View):
         #keeping track of input
         self.keys_pressed = set()
 
+        self.game_over = False
+        self.wave_info = self.spawner.get_wave_info()
+        #TODO add ui text : game started and maybe some basic instructions
+
     def on_show_view(self):
         arcade.set_background_color(arcade.color.DARK_PASTEL_RED)
         self.brain.is_paused = False
         pass
 
     def on_update(self, delta_time):
-        if self.brain.is_paused:
+        if self.brain.is_paused or self.game_over:
             return
         
         self.brain.game_time += delta_time
         self.player.update_movement()
         self.physics_handler.update()
-        for enemy in self.enemy_list:
-            enemy.update(delta_time, self.player)
+        self.player_list.update(delta_time)
+        self.player_list.update_animation(delta_time)
 
-        self.player.update_animation()
+        dead_enemies = []
+        for enemy in self.enemy_list:
+            can_attack = enemy.update(delta_time, self.player)
+            
+            if can_attack:
+                self.combat_system.enemy_attack_player(enemy, self.player)
+
+                if self.player.current_hp <= 0:
+                    self.game_over = True
+                    # TODO: Add game over state
+            
+            if enemy.current_hp <= 0:
+                dead_enemies.append(enemy)
+
+        for enemy in dead_enemies:
+            xp_gained = self.combat_system.calculate_xp_gain(enemy.level, self.player.level)
+            self.player.xp += xp_gained
+            #TODO this logic could be improved
+            self.brain.score += xp_gained * 10 * random.uniform(0.85, 1.15)
+
+            #TODO maybe in a corner a small message can appear each time an enemy dies            
+            self.enemy_list.remove(enemy)
+
+        self.enemy_list.update_animation()
+
+        if self.combat_system.check_level_up(self.player):
+            self.player.level_up()
+
+        self.spawner.update(delta_time, self.enemy_list)
+        self.wave_info = self.spawner.get_wave_info()
+
         self.center_camera_to_player()
+        self.brain.enemies = self.enemy_list
 
     def center_camera_to_player(self):
         target_position = (self.player.center_x, self.player.center_y)
@@ -74,8 +115,9 @@ class PlayState(arcade.View):
         self.enemy_list.draw()
         
         self.camera_gui.use()
-        self.hud.draw(self.player, self.brain.score)
-
+        self.hud.draw(self.player, self.brain.score, self.wave_info, self.brain.game_time)
+        if self.game_over:
+            self.draw_game_over()
     def on_key_press(self, key, modifiers):
         self.keys_pressed.add(key)
         
@@ -92,8 +134,7 @@ class PlayState(arcade.View):
         elif key == arcade.key.ESCAPE:
             self.brain.set_state("PAUSE")
         elif key == arcade.key.SPACE:
-            # TODO: Implement attack logic
-            return
+            self.combat_system.process_attack(self.player,self.enemy_list,self.physics_handler)
     
     def on_key_release(self, key, modifiers):
         if key in self.keys_pressed:
@@ -107,3 +148,35 @@ class PlayState(arcade.View):
             self.player.left_pressed = False
         elif key == arcade.key.D or key == arcade.key.RIGHT:
             self.player.right_pressed = False
+
+    def draw_game_over(self):
+        overlay = arcade.rect.XYWH(0, 0, self.window.width, self.window.height)
+        arcade.draw_rect_filled(overlay, (0, 0, 0, 200))
+        
+        arcade.draw_text(
+            "GAME OVER",
+            self.window.width / 2,
+            self.window.height / 2 + 50,
+            arcade.color.RED,
+            60,
+            anchor_x="center",
+            bold=True
+        )
+        
+        arcade.draw_text(
+            f"Final Score: {self.brain.score}",
+            self.window.width / 2,
+            self.window.height / 2,
+            arcade.color.WHITE,
+            30,
+            anchor_x="center"
+        )
+        
+        arcade.draw_text(
+            "Press R to Restart",
+            self.window.width / 2,
+            self.window.height / 2 - 60,
+            arcade.color.YELLOW,
+            24,
+            anchor_x="center"
+        )

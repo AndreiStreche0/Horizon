@@ -11,6 +11,8 @@ class Brain:
         self.username = "Player"
         self.game_time = 0
         self.is_paused = False
+        #TODO change so this is dependant on character choice
+        self.player_base_damage = 20
 
         self.player = None
         self.enemies = []

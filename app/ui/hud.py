@@ -5,7 +5,7 @@ class HUD:
     def __init__(self):
         self.camera = arcade.camera.Camera2D()
 
-    def draw(self, player, score):
+    def draw(self, player, score, wave_info, game_time):
         self.camera.use()
         #health bar
         bar_width = 200
@@ -70,6 +70,36 @@ class HUD:
             20,
             (180, 180, 180),
             12
+        )
+        if wave_info:
+            arcade.draw_text(
+                text=f"Wave: {wave_info['wave']}",
+                x=SCREEN_WIDTH - 120,
+                y=SCREEN_HEIGHT - 30,
+                color=arcade.color.ORANGE,
+                font_size=16,
+                anchor_x="center"
+            )
+            
+            arcade.draw_text(
+                text=f"Enemies: {wave_info['enemies_remaining']}/{wave_info['total_enemies']}",
+                x=SCREEN_WIDTH - 120,
+                y=SCREEN_HEIGHT - 55,
+                color=arcade.color.LIGHT_GRAY,
+                font_size=14,
+                anchor_x="center"
+            )
+            minutes = int(game_time // 60)
+            seconds = int(game_time % 60)
+            time_text = f"{minutes:02d}:{seconds:02d}"
+            
+            arcade.draw_text(
+                text=time_text,
+                x=SCREEN_WIDTH // 2,
+                y=SCREEN_HEIGHT - 100,
+                color=arcade.color.LIGHT_GRAY,
+                font_size=16,
+                anchor_x="center"
         )
         # TODO: maybe progress bar thowards winning game (time passed or nr of dead enemies)
         pass

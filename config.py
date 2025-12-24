@@ -5,7 +5,7 @@ SCREEN_TITLE = "Horizon"
 #Temporary data, they can change
 PLAYER_SPEED = 5
 PLAYER_START_HP = 100
-ENEMY_SPEED = 2
+ENEMY_SPEED = 0.5
 COLOR_BACKGROUND_MENU = (30, 30, 40) # Dark Blue-ish
 COLOR_TEXT = (255, 255, 255)
 
