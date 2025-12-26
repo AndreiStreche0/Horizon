@@ -18,6 +18,12 @@ class Player(Entity):
         self.damage = self.character_data["damage"]
         self.xp = 0
         self.level = 1
+        self.base_damage = base_damage
+        
+        self.left_key = False
+        self.right_key = False
+        self.up_key = False
+        self.down_key = False
 
         # --- Animation ---
         self.idle_textures = []
@@ -136,7 +142,7 @@ class Player(Entity):
             else:
                 self.texture = textures[self.current_texture]["left"]
 
-    def update_movement(self, key_left, key_right, key_up, key_down):
+    def update_movement(self):
         if self.is_attacking or self.is_hurt or self.is_dead:
             self.change_x = 0
             self.change_y = 0
@@ -145,15 +151,18 @@ class Player(Entity):
         self.change_x = 0
         self.change_y = 0
 
-        if key_left:
+        if self.left_key and not self.right_key:
             self.change_x = -self.speed
-        elif key_right:
+        if self.right_key and not self.left_key:
             self.change_x = self.speed
-
-        if key_up:
+        if self.up_key and not self.down_key:
             self.change_y = self.speed
-        elif key_down:
+        if self.down_key and not self.up_key:
             self.change_y = -self.speed
+        #diagonal movement
+        if self.change_x != 0 and self.change_y != 0:
+            self.change_x *= (2 ** 0.5)
+            self.change_y *= (2 ** 0.5)
 
     def attack(self, attack_type):
         if not self.is_attacking and not self.is_hurt and not self.is_dead:
@@ -194,5 +203,10 @@ class Player(Entity):
         self.current_texture = 0
 
     def level_up(self):
-        # TODO: improve player stats
-        pass
+        #TODO add something for UI, a level up animation
+        self.level += 1
+        self.max_hp += self.level * 15
+        self.current_hp = self.max_hp
+        self.speed += 0.2
+        self.base_damage += max(10, 2 * self.level)
+        return self.level
