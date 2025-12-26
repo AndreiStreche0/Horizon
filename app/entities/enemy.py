@@ -6,7 +6,8 @@ from config import ENEMY_SPEED
 
 class Enemy(Entity):
     def __init__(self, x, y, level):
-        super().__init__(":resources:images/animated_characters/zombie/zombie_idle.png", 0.5, 30 + (level * 5))
+        #change hp from here
+        super().__init__(":resources:images/animated_characters/zombie/zombie_idle.png", 0.5, 75 + (level * 15))
         
         self.center_x = x
         self.center_y = y

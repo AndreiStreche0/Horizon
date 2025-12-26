@@ -5,7 +5,6 @@ from config import ENEMY_SPEED
 
 class Entity(arcade.Sprite):
     def __init__(self, image_path, scale, max_hp):
-        #TODO change png
         super().__init__(image_path, scale)
         self.max_hp = max_hp
         self.current_hp = max_hp

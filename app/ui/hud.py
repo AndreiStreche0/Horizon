@@ -27,15 +27,18 @@ class HUD:
         fill_rect = arcade.rect.XYWH(bg_x, bg_y, health_width, bar_height)
         arcade.draw_rect_filled(fill_rect, health_color)
 
+        player.current_hp = round(player.current_hp)
+        #hp display
         arcade.draw_text(
             text=f"HP: {player.current_hp}/{player.max_hp}",
-            x=SCREEN_WIDTH // 2,
+            x=SCREEN_WIDTH // 2 - 90,
             y=SCREEN_HEIGHT - 40,
             color=arcade.color.WHITE,
             font_size=14,
             anchor_x="center"
         )
         #score display
+        score = round(score)
         arcade.draw_text(
             text=f"Score: {score}",
             x=20,
@@ -54,9 +57,11 @@ class HUD:
         )
         
         #XP display
+        needed_xp = player.level * 100
+        player.xp = round(player.xp)
         arcade.draw_text(
-            f"XP: {player.xp}/100",
-            SCREEN_WIDTH - 120,
+            f"XP: {player.xp}/{needed_xp}",
+            SCREEN_WIDTH - 300,
             SCREEN_HEIGHT - 30,
             arcade.color.CYAN,
             16,
@@ -72,6 +77,7 @@ class HUD:
             12
         )
         if wave_info:
+            #wave info
             arcade.draw_text(
                 text=f"Wave: {wave_info['wave']}",
                 x=SCREEN_WIDTH - 120,
@@ -80,7 +86,7 @@ class HUD:
                 font_size=16,
                 anchor_x="center"
             )
-            
+            #enemy info
             arcade.draw_text(
                 text=f"Enemies: {wave_info['enemies_remaining']}/{wave_info['total_enemies']}",
                 x=SCREEN_WIDTH - 120,
@@ -92,7 +98,7 @@ class HUD:
             minutes = int(game_time // 60)
             seconds = int(game_time % 60)
             time_text = f"{minutes:02d}:{seconds:02d}"
-            
+            #time info
             arcade.draw_text(
                 text=time_text,
                 x=SCREEN_WIDTH // 2,

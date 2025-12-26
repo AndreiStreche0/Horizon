@@ -1,6 +1,6 @@
 import arcade
 import random
-from config import SCREEN_WIDTH, SCREEN_HEIGHT
+from config import SCREEN_WIDTH, SCREEN_HEIGHT, NUMBER_OF_WAVES
 from app.entities.player import Player
 from app.map.loader import load_game_map
 from app.pve_logic.collision import PhysicsHandler
@@ -96,6 +96,10 @@ class PlayState(arcade.View):
         self.center_camera_to_player()
         self.brain.enemies = self.enemy_list
 
+        if self.spawner.wave > NUMBER_OF_WAVES:
+            is_high_score = self.brain.score > self.brain.high_score
+            self.brain.set_state("WIN", is_high_score)
+
     def center_camera_to_player(self):
         target_position = (self.player.center_x, self.player.center_y)
         
@@ -117,7 +121,7 @@ class PlayState(arcade.View):
         self.camera_gui.use()
         self.hud.draw(self.player, self.brain.score, self.wave_info, self.brain.game_time)
         if self.game_over:
-            self.draw_game_over()
+            self.brain.set_state("LOSE")
     def on_key_press(self, key, modifiers):
         self.keys_pressed.add(key)
         
@@ -148,35 +152,3 @@ class PlayState(arcade.View):
             self.player.left_pressed = False
         elif key == arcade.key.D or key == arcade.key.RIGHT:
             self.player.right_pressed = False
-
-    def draw_game_over(self):
-        overlay = arcade.rect.XYWH(0, 0, self.window.width, self.window.height)
-        arcade.draw_rect_filled(overlay, (0, 0, 0, 200))
-        
-        arcade.draw_text(
-            "GAME OVER",
-            self.window.width / 2,
-            self.window.height / 2 + 50,
-            arcade.color.RED,
-            60,
-            anchor_x="center",
-            bold=True
-        )
-        
-        arcade.draw_text(
-            f"Final Score: {self.brain.score}",
-            self.window.width / 2,
-            self.window.height / 2,
-            arcade.color.WHITE,
-            30,
-            anchor_x="center"
-        )
-        
-        arcade.draw_text(
-            "Press R to Restart",
-            self.window.width / 2,
-            self.window.height / 2 - 60,
-            arcade.color.YELLOW,
-            24,
-            anchor_x="center"
-        )

@@ -21,7 +21,7 @@ class PauseState(arcade.View):
         overlay_rect = arcade.rect.XYWH(0, 0, self.window.width, self.window.height)
         arcade.draw_rect_filled(overlay_rect, (0, 0, 0, 150))
         
-        # Draw pause text
+        #draw pause text
         arcade.draw_text(
             "PAUSED",
             self.window.width / 2,
@@ -32,7 +32,7 @@ class PauseState(arcade.View):
             bold=True
         )
         
-        # Draw options
+        #drraw options
         arcade.draw_text(
             "[ESC] - Resume Game",
             self.window.width / 2,
@@ -42,6 +42,7 @@ class PauseState(arcade.View):
             anchor_x="center"
         )
         
+        #draw exit
         arcade.draw_text(
             "[Q] - Quit to Menu",
             self.window.width / 2,
@@ -51,7 +52,8 @@ class PauseState(arcade.View):
             anchor_x="center"
         )
         
-        # Current score
+        self.brain.score = round(self.brain.score)
+        #draw current score
         arcade.draw_text(
             f"Score: {self.brain.score}",
             self.window.width / 2,
