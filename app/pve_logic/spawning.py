@@ -5,7 +5,7 @@ from app.entities.enemy import Enemy
 from config import NUMBER_OF_WAVES
 
 class Spawner:
-    def __init__(self, map_width, map_height, player_ref, base_spawn_interval):
+    def __init__(self, map_width, map_height, player_ref, base_spawn_interval, play_state):
         self.last_spawn_time = time.time()
         self.map_width = map_width
         self.map_height = map_height
@@ -13,6 +13,7 @@ class Spawner:
         self.base_spawn_interval = base_spawn_interval
         self.spawn_interval = base_spawn_interval
         self.last_spawn_time = time.time()
+        self.play_state = play_state
 
         self.wave = 1
         self.enemies_per_wave = 5
@@ -77,12 +78,13 @@ class Spawner:
         #TODO change level logic, maybe based on player level or another better logic
         enemy_level = min(self.wave // 3 + 1, 10)
         
-        enemy = Enemy(x, y, enemy_level)
+        enemy = Enemy(x, y, enemy_level, self.play_state.enemy_list)
         enemy_list.append(enemy)
         
         self.last_spawn_time = time.time()
         self.enemies_curr_wave += 1
-        
+        self.play_state.physics_handler.add_enemy_hitbox(enemy)
+
         return enemy
     
     def update(self, delta_time, enemy_list):

@@ -30,8 +30,8 @@ class PlayState(arcade.View):
 
         #combat and spawner logic
         self.combat_system = CombatSystem()
-        #the spawning base interval can be changed here
-        self.spawner = Spawner(self.tilemap.width, self.tilemap.height, self.player, 10)
+        #TODO: the spawning base interval can be changed here
+        self.spawner = Spawner(self.tilemap.width, self.tilemap.height, self.player, 10, self)
         #initializing HUD
         self.hud = HUD()
         self.brain.hud = self.hud
@@ -82,7 +82,8 @@ class PlayState(arcade.View):
             #TODO this logic could be improved
             self.brain.score += xp_gained * 10 * random.uniform(0.85, 1.15)
 
-            #TODO maybe in a corner a small message can appear each time an enemy dies            
+            #TODO maybe in a corner a small message can appear each time an enemy dies
+            self.physics_handler.remove_enemy_hitbox(enemy)
             self.enemy_list.remove(enemy)
 
         self.enemy_list.update_animation()
