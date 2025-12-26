@@ -70,7 +70,7 @@ class MenuState(arcade.View):
     def on_key_press(self, symbol, modifiers):
         if symbol == arcade.key.ENTER:
             print("User requested START game")
-            self.brain.set_state("PLAY")
+            self.brain.set_state("CHARACTER_SELECT")
             
         elif symbol == arcade.key.ESCAPE:
             self.brain.quit_game()

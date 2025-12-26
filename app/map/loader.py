@@ -19,26 +19,26 @@ def load_game_map():
         sprite = arcade.SpriteSolidColor(64, 64, arcade.color.GRAY)
         sprite.center_x = x
         sprite.center_y = 768
-        walls_list.append(sprite)
+        #walls_list.append(sprite)
         
         #simple bottom gray wall
         sprite = arcade.SpriteSolidColor(64, 64, arcade.color.GRAY)
         sprite.center_x = x
         sprite.center_y = 0
-        walls_list.append(sprite)
+        #walls_list.append(sprite)
     
     for y in range(0, 768, 64):
         #simple left gray wall
         sprite = arcade.SpriteSolidColor(64, 64, arcade.color.GRAY)
         sprite.center_x = 0
         sprite.center_y = y
-        walls_list.append(sprite)
+        #walls_list.append(sprite)
         
         #simple right gray wall
         sprite = arcade.SpriteSolidColor(64, 64, arcade.color.GRAY)
         sprite.center_x = 1024
         sprite.center_y = y
-        walls_list.append(sprite)
+        #walls_list.append(sprite)
     
     scene.add_sprite_list("Background", sprite_list=background_list)
     scene.add_sprite_list("Walls", sprite_list=walls_list)

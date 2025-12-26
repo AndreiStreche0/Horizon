@@ -5,7 +5,7 @@ from app.entities.entity import Entity
 from config import ENEMY_SPEED
 
 class Enemy(Entity):
-    def __init__(self, x, y, level):
+    def __init__(self, x, y, level, enemy_list):
         #change hp from here
         super().__init__(":resources:images/animated_characters/zombie/zombie_idle.png", 0.5, 75 + (level * 15))
         
@@ -21,6 +21,7 @@ class Enemy(Entity):
         self.attack_range = 50
         self.attack_cooldown = 1.5
         self.attack_timer = 0
+        self.enemy_list = enemy_list
 
         self.wander_direction = random.uniform(0, 2 * math.pi)
         self.wander_timer = random.randint(30, 90)
@@ -58,6 +59,27 @@ class Enemy(Entity):
             self.change_x = math.cos(self.wander_direction) * self.speed * 0.5
             self.change_y = math.sin(self.wander_direction) * self.speed * 0.5
 
-        super().update()
+        #separation logic so enemies dont stack on eachother
+
+        separation_x = 0
+        separation_y = 0
+        count = 0
+        min_dist = 40
+
+        for other in self.enemy_list:
+            if other != self:
+                dist_x = self.center_x - other.center_x
+                dist_y = self.center_y - other.center_y
+                dist = math.sqrt(dist_x**2 + dist_y**2)
+
+                if dist < min_dist and dist > 0:
+                    separation_x += (dist_x / dist) / dist
+                    separation_y += (dist_y / dist) / dist
+                    count += 1
+
+        if count > 0:
+            #TODO change if necessary
+            self.change_x += separation_x * 150
+            self.change_y += separation_y * 150
         
         return should_attack

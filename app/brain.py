@@ -1,4 +1,5 @@
 import arcade
+from app.states.character_selection_state import CharacterSelectState
 
 #handles game state and current session
 class Brain:
@@ -10,10 +11,9 @@ class Brain:
         #TODO change this when sttorage is implemented
         self.high_score = 0
         self.username = "Player"
+        self.selected_character = "knight"  # Default character
         self.game_time = 0
         self.is_paused = False
-        #TODO change so this is dependant on character choice
-        self.player_base_damage = 20
 
         self.player = None
         self.enemies = []
@@ -26,6 +26,10 @@ class Brain:
         if state_type == "MENU":
             from app.states.menu_state import MenuState
             view = MenuState(self)
+            self.window.show_view(view)
+            
+        elif state_type == "CHARACTER_SELECT":
+            view = CharacterSelectState(self)
             self.window.show_view(view)
             
         elif state_type == "PLAY":
