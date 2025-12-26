@@ -1,28 +1,42 @@
 from app.entities.entity import Entity
 import arcade
 from pathlib import Path
+from config import PLAYABLE_CHARACTERS
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 
 class Player(Entity):
-    def __init__(self):
-        # Entity(texture, scale, hp)
-        super().__init__(None, 1.0, 100)
+    def __init__(self, character_type="knight"):
+        self.character_type = character_type
+        self.character_data = PLAYABLE_CHARACTERS[character_type]
+        
+        # Entity(texture, scale, max_hp)
+        super().__init__(None, 1.0, self.character_data["hp"])
 
-        # Player-specific stats
-        self.speed = 100
+        # Player-specific stats from character data
+        self.speed = self.character_data["speed"]
+        self.damage = self.character_data["damage"]
         self.xp = 0
         self.level = 1
 
         # --- Animation ---
         self.idle_textures = []
         self.run_textures = []
+        self.attack1_textures = []
+        self.attack2_textures = []
+        self.attack3_textures = []
+        self.hurt_textures = []
+        self.death_textures = []
         self.current_texture = 0
         self.animation_timer = 0
-        self.animation_speed = 0.15
+        self.animation_speed = 0.1
 
         self.current_animation = "idle"
         self.facing_right = True
+        self.is_attacking = False
+        self.is_hurt = False
+        self.is_dead = False
+        self.animation_finished = False
 
         self.load_animations()
 
@@ -30,11 +44,17 @@ class Player(Entity):
         self.texture = self.idle_textures[0]["right"]
 
     def load_animations(self):
-        self.idle_textures = self.load_animation_frames("idle", 6)
-        self.run_textures = self.load_animation_frames("run", 8)
+        frames = self.character_data["animations_frames"]
+        self.idle_textures = self.load_animation_frames("idle", frames["idle"])
+        self.run_textures = self.load_animation_frames("run", frames["run"])
+        self.attack1_textures = self.load_animation_frames("attack1", frames["attack1"])
+        self.attack2_textures = self.load_animation_frames("attack2", frames["attack2"])
+        self.attack3_textures = self.load_animation_frames("attack3", frames["attack3"])
+        self.hurt_textures = self.load_animation_frames("hurt", frames["hurt"])
+        self.death_textures = self.load_animation_frames("death", frames["death"])
 
     def load_animation_frames(self, animation_name, frame_count):
-        folder = BASE_DIR / f"assets/player/knight/{animation_name}"
+        folder = BASE_DIR / f"assets/player/{self.character_data['folder']}/{animation_name}"
         textures = []
 
         for i in range(frame_count):
@@ -51,26 +71,36 @@ class Player(Entity):
         return textures
 
     def update(self, delta_time: float):
-        # Determină animația curentă
-        self.center_x += self.change_x * delta_time
-        self.center_y += self.change_y * delta_time
+        if not self.is_dead:
+            self.center_x += self.change_x * delta_time
+            self.center_y += self.change_y * delta_time
 
-        if self.change_x != 0 or self.change_y != 0:
+        if self.is_dead:
+            if self.current_animation != "death":
+                self.current_animation = "death"
+                self.current_texture = 0
+                self.animation_finished = False
+        elif self.is_hurt:
+            if self.current_animation != "hurt":
+                self.current_animation = "hurt"
+                self.current_texture = 0
+                self.animation_finished = False
+        elif self.is_attacking:
+            pass
+        elif self.change_x != 0 or self.change_y != 0:
             if self.current_animation != "run":
                 self.current_animation = "run"
                 self.current_texture = 0
         else:
-            if self.current_animation != "idle":
+            if self.current_animation != "idle" and not self.is_attacking:
                 self.current_animation = "idle"
                 self.current_texture = 0
 
-        # Determină direcția
         if self.change_x < 0:
             self.facing_right = False
         elif self.change_x > 0:
             self.facing_right = True
 
-        # Actualizează frame-ul animației
         self.animation_timer += delta_time
         if self.animation_timer >= self.animation_speed:
             self.animation_timer = 0
@@ -79,10 +109,27 @@ class Player(Entity):
                 textures = self.idle_textures
             elif self.current_animation == "run":
                 textures = self.run_textures
+            elif self.current_animation == "attack1":
+                textures = self.attack1_textures
+            elif self.current_animation == "attack2":
+                textures = self.attack2_textures
+            elif self.current_animation == "attack3":
+                textures = self.attack3_textures
+            elif self.current_animation == "hurt":
+                textures = self.hurt_textures
+            elif self.current_animation == "death":
+                textures = self.death_textures
             else:
                 textures = self.idle_textures
 
             self.current_texture = (self.current_texture + 1) % len(textures)
+
+            if self.current_texture == 0:
+                self.animation_finished = True
+                if self.is_hurt:
+                    self.is_hurt = False
+                if self.is_attacking:
+                    self.is_attacking = False
 
             if self.facing_right:
                 self.texture = textures[self.current_texture]["right"]
@@ -90,6 +137,11 @@ class Player(Entity):
                 self.texture = textures[self.current_texture]["left"]
 
     def update_movement(self, key_left, key_right, key_up, key_down):
+        if self.is_attacking or self.is_hurt or self.is_dead:
+            self.change_x = 0
+            self.change_y = 0
+            return
+
         self.change_x = 0
         self.change_y = 0
 
@@ -102,6 +154,44 @@ class Player(Entity):
             self.change_y = self.speed
         elif key_down:
             self.change_y = -self.speed
+
+    def attack(self, attack_type):
+        if not self.is_attacking and not self.is_hurt and not self.is_dead:
+            self.is_attacking = True
+            self.animation_finished = False
+            self.change_x = 0
+            self.change_y = 0
+            
+            if attack_type == 1:
+                self.current_animation = "attack1"
+            elif attack_type == 2:
+                self.current_animation = "attack2"
+            elif attack_type == 3:
+                self.current_animation = "attack3"
+            
+            self.current_texture = 0
+
+    def take_damage(self, damage):
+        if not self.is_dead:
+            self.current_hp -= damage
+            if self.current_hp <= 0:
+                self.current_hp = 0
+                self.die()
+            else:
+                self.is_hurt = True
+                self.animation_finished = False
+                self.change_x = 0
+                self.change_y = 0
+                self.current_animation = "hurt"
+                self.current_texture = 0
+
+    def die(self):
+        self.is_dead = True
+        self.animation_finished = False
+        self.change_x = 0
+        self.change_y = 0
+        self.current_animation = "death"
+        self.current_texture = 0
 
     def level_up(self):
         # TODO: improve player stats

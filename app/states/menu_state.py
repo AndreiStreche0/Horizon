@@ -23,7 +23,7 @@ class MenuState(arcade.View):
         )
 
         arcade.draw_text(
-            "Press ENTER to Start (TODO)",
+            "Press ENTER to Start",
             SCREEN_WIDTH / 2,
             SCREEN_HEIGHT / 2 - 20,
             COLOR_TEXT,
@@ -43,8 +43,7 @@ class MenuState(arcade.View):
     def on_key_press(self, symbol, modifiers):
         if symbol == arcade.key.ENTER:
             print("User requested START game")
-            #TODO: uncomment when play logic is done
-            self.brain.set_state("PLAY")
+            self.brain.set_state("CHARACTER_SELECT")
             
         elif symbol == arcade.key.ESCAPE:
             self.brain.quit_game()
