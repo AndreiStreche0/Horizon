@@ -7,6 +7,7 @@ from app.pve_logic.collision import PhysicsHandler
 from app.pve_logic.combat import CombatSystem
 from app.pve_logic.spawning import Spawner
 from app.ui.hud import HUD
+from storage.authentification import AuthentificationManager
 
 class PlayState(arcade.View):
     def __init__(self, brain):
@@ -14,6 +15,7 @@ class PlayState(arcade.View):
         self.brain = brain
         self.player_list = arcade.SpriteList()
         self.enemy_list = arcade.SpriteList()
+        self.authentificator = AuthentificationManager()
         #initializing player
         self.player = Player(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2, brain.player_base_damage)
         self.player_list.append(self.player)
@@ -99,6 +101,7 @@ class PlayState(arcade.View):
 
         if self.spawner.wave > NUMBER_OF_WAVES:
             is_high_score = self.brain.score > self.brain.high_score
+            self.brain.new_score(self.brain.score)
             self.brain.set_state("WIN", is_high_score)
 
     def center_camera_to_player(self):

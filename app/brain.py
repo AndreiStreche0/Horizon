@@ -1,15 +1,15 @@
 import arcade
-
+from storage.authentification import AuthentificationManager
 #handles game state and current session
 class Brain:
     def __init__(self, window):
         self.window = window
-        
+        self.authentificator = AuthentificationManager()
+
         self.score = 0
         self.current_level = 1
-        #TODO change this when sttorage is implemented
-        self.high_score = 0
-        self.username = "Player"
+        self.username = self.authentificator.current_user
+        self.high_score = self.authentificator.get_current_high_score()
         self.game_time = 0
         self.is_paused = False
         #TODO change so this is dependant on character choice
@@ -60,6 +60,17 @@ class Brain:
         #TODO maybe remove these from reset? not sure
         self.spawner = None
         self.physics_handler = None
+
+    #TODO change after implementing login logic from menu
+    def set_user(self, new_username):
+        self.authentificator.login(new_username)
+        self.username = self.authentificator.current_user
+        self.high_score = self.authentificator.get_current_high_score()
+
+    def new_score(self, new_score):
+        if new_score > self.high_score:
+            self.high_score = new_score
+            self.authentificator.save_new_score(round(new_score))
 
     def quit_game(self):
         arcade.close_window()
