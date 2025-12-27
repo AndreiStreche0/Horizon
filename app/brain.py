@@ -7,6 +7,7 @@ from app.states.lose_state import LoseState
 from app.states.win_state import WinState
 from app.states.login_state import LoginState
 from app.states.leaderboard_state import LeaderboardState
+from app.states.character_selection_state import CharacterSelectState
 
 #handles game state and current session
 class Brain:
@@ -23,9 +24,8 @@ class Brain:
         self.high_score = self.authentificator.get_current_high_score()
         self.game_time = 0
         self.is_paused = False
-        #TODO change so this is dependant on character choice
-        self.player_base_damage = 20
-
+        #default character
+        self.selected_character = "knight"
         self.player = None
         self.enemies = []
         self.current_map = None
@@ -36,6 +36,10 @@ class Brain:
     def set_state(self, state_type, is_high_score = False):
         if state_type == "MENU":
             view = MenuState(self)
+            self.window.show_view(view)
+            
+        elif state_type == "CHARACTER_SELECT":
+            view = CharacterSelectState(self)
             self.window.show_view(view)
             
         elif state_type == "PLAY":

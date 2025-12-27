@@ -49,13 +49,20 @@ class MenuState(arcade.View):
             font_size=10,
             anchor_x="center"
         )
-        round (self.brain.high_score)
         arcade.draw_text(
             f"Your High Score: {self.brain.high_score}",
             self.window.width / 2,
             self.window.height / 2 - 120,
             (255, 215, 0),
             font_size=16,
+            anchor_x="center"
+        )
+        arcade.draw_text(
+            f"Press [S] to change Character",
+            self.window.width / 2,
+            self.window.height / 2 - 200,
+            arcade.color.WHITE,
+            font_size=20,
             anchor_x="center"
         )
         arcade.draw_text(
@@ -99,6 +106,10 @@ class MenuState(arcade.View):
             self.brain.set_state("PLAY")
         elif symbol == arcade.key.L:
             self.brain.set_state("LOGIN")
+        
+        elif symbol == arcade.key.S:
+            self.brain.set_state("CHARACTER_SELECT")
+            
         elif symbol == arcade.key.ESCAPE:
             self.brain.quit_game()
         elif symbol == arcade.key.TAB:

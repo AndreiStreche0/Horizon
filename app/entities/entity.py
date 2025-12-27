@@ -23,7 +23,7 @@ class Entity(arcade.Sprite):
         self.color = (255, 100, 100)
         
         return self.current_hp <= 0
-    
+
     def update_flash_animation(self, delta_time):
         if self.hit_flash_timer > 0:
             self.hit_flash_timer -= delta_time

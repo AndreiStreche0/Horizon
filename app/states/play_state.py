@@ -17,7 +17,10 @@ class PlayState(arcade.View):
         self.enemy_list = arcade.SpriteList()
         self.authentificator = AuthentificationManager()
         #initializing player
-        self.player = Player(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2, brain.player_base_damage)
+        character = getattr(self.brain, 'selected_character', 'knight')
+        self.player = Player(character)
+        self.player.center_x = SCREEN_WIDTH // 2
+        self.player.center_y = SCREEN_HEIGHT // 2
         self.player_list.append(self.player)
 
         #loading map
@@ -131,17 +134,24 @@ class PlayState(arcade.View):
         
         # Player movement
         if key == arcade.key.W or key == arcade.key.UP:
-            self.player.up_pressed = True
+            self.player.up_key = True
         elif key == arcade.key.S or key == arcade.key.DOWN:
-            self.player.down_pressed = True
+            self.player.down_key = True
         elif key == arcade.key.A or key == arcade.key.LEFT:
-            self.player.left_pressed = True
+            self.player.left_key = True
         elif key == arcade.key.D or key == arcade.key.RIGHT:
-            self.player.right_pressed = True
+            self.player.right_key = True
         # Game control
         elif key == arcade.key.ESCAPE:
             self.brain.set_state("PAUSE")
-        elif key == arcade.key.SPACE:
+        elif key == arcade.key.Z:
+            self.player.attack(1)
+            self.combat_system.process_attack(self.player,self.enemy_list,self.physics_handler)
+        elif key == arcade.key.X:
+            self.player.attack(2)
+            self.combat_system.process_attack(self.player,self.enemy_list,self.physics_handler)
+        elif key == arcade.key.C:
+            self.player.attack(3)
             self.combat_system.process_attack(self.player,self.enemy_list,self.physics_handler)
     
     def on_key_release(self, key, modifiers):
@@ -149,10 +159,10 @@ class PlayState(arcade.View):
             self.keys_pressed.remove(key)
 
         if key == arcade.key.W or key == arcade.key.UP:
-            self.player.up_pressed = False
+            self.player.up_key = False
         elif key == arcade.key.S or key == arcade.key.DOWN:
-            self.player.down_pressed = False
+            self.player.down_key = False
         elif key == arcade.key.A or key == arcade.key.LEFT:
-            self.player.left_pressed = False
+            self.player.left_key = False
         elif key == arcade.key.D or key == arcade.key.RIGHT:
-            self.player.right_pressed = False
+            self.player.right_key = False

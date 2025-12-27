@@ -81,5 +81,6 @@ class Enemy(Entity):
             #TODO change if necessary
             self.change_x += separation_x * 150
             self.change_y += separation_y * 150
+        super().update()
         
         return should_attack
