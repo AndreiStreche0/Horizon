@@ -33,6 +33,7 @@ class AuthentificationManager:
             return True
         return False
     
-    def get_all_users(self):
-        #TODO: use this list to have a display for each user highscore
-        return list(self.user_data["users"].keys())
+    def get_all_user_scores(self):
+        users_dictionary = self.user_data.get("users", {})
+        
+        return sorted(users_dictionary.items(), key=lambda item: item[1], reverse=True)
