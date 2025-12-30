@@ -11,13 +11,18 @@ class Player(Entity):
         self.character_data = PLAYABLE_CHARACTERS[character_type]
         
         # Entity(texture, scale, max_hp)
-        super().__init__(None, 1.0, self.character_data["hp"])
+        super().__init__(BASE_DIR / f"assets/player/{self.character_data['folder']}/idle/idle_0.png", 1.0, self.character_data["hp"])
 
         # Player-specific stats from character data
         self.speed = self.character_data["speed"]
         self.damage = self.character_data["damage"]
         self.xp = 0
         self.level = 1
+        
+        self.left_key = False
+        self.right_key = False
+        self.up_key = False
+        self.down_key = False
 
         # --- Animation ---
         self.idle_textures = []
@@ -29,7 +34,8 @@ class Player(Entity):
         self.death_textures = []
         self.current_texture = 0
         self.animation_timer = 0
-        self.animation_speed = 0.1
+        self.animation_speed = 0.08
+        self.death_hold_time = 0.0
 
         self.current_animation = "idle"
         self.facing_right = True
@@ -37,6 +43,8 @@ class Player(Entity):
         self.is_hurt = False
         self.is_dead = False
         self.animation_finished = False
+
+        self.current_attack_type = 1
 
         self.load_animations()
 
@@ -122,21 +130,31 @@ class Player(Entity):
             else:
                 textures = self.idle_textures
 
-            self.current_texture = (self.current_texture + 1) % len(textures)
-
-            if self.current_texture == 0:
-                self.animation_finished = True
-                if self.is_hurt:
-                    self.is_hurt = False
-                if self.is_attacking:
-                    self.is_attacking = False
-
+            if self.current_animation == "death":
+                if self.current_texture < len(textures) - 1:
+                    self.current_texture += 1
+                    if self.current_texture == len(textures) - 1:
+                        self.animation_finished = True
+                else:
+                    self.animation_finished = True
+            else:
+                self.current_texture = (self.current_texture + 1) % len(textures)
+                if self.current_texture == 0:
+                    self.animation_finished = True
+                    if self.is_hurt:
+                        self.is_hurt = False
+                    if self.is_attacking:
+                        self.is_attacking = False
+            
             if self.facing_right:
                 self.texture = textures[self.current_texture]["right"]
             else:
                 self.texture = textures[self.current_texture]["left"]
 
-    def update_movement(self, key_left, key_right, key_up, key_down):
+        if self.is_dead and self.current_texture >= len(self.death_textures) - 1:
+            self.death_hold_time = max(0.0, self.death_hold_time - delta_time)
+
+    def update_movement(self):
         if self.is_attacking or self.is_hurt or self.is_dead:
             self.change_x = 0
             self.change_y = 0
@@ -145,15 +163,18 @@ class Player(Entity):
         self.change_x = 0
         self.change_y = 0
 
-        if key_left:
+        if self.left_key and not self.right_key:
             self.change_x = -self.speed
-        elif key_right:
+        if self.right_key and not self.left_key:
             self.change_x = self.speed
-
-        if key_up:
+        if self.up_key and not self.down_key:
             self.change_y = self.speed
-        elif key_down:
+        if self.down_key and not self.up_key:
             self.change_y = -self.speed
+        #diagonal movement
+        if self.change_x != 0 and self.change_y != 0:
+            self.change_x *= (2 ** 0.5)
+            self.change_y *= (2 ** 0.5)
 
     def attack(self, attack_type):
         if not self.is_attacking and not self.is_hurt and not self.is_dead:
@@ -161,6 +182,7 @@ class Player(Entity):
             self.animation_finished = False
             self.change_x = 0
             self.change_y = 0
+            self.current_attack_type = attack_type
             
             if attack_type == 1:
                 self.current_animation = "attack1"
@@ -192,7 +214,13 @@ class Player(Entity):
         self.change_y = 0
         self.current_animation = "death"
         self.current_texture = 0
+        self.death_hold_time = 1.0
 
     def level_up(self):
-        # TODO: improve player stats
-        pass
+        #TODO add something for UI, a level up animation
+        self.level += 1
+        self.max_hp += self.level * 15
+        self.current_hp = self.max_hp
+        self.speed += 0.2
+        self.damage += max(10, 2 * self.level)
+        return self.level
