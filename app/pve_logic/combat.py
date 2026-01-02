@@ -18,21 +18,22 @@ class CombatSystem:
 
     def process_attack(self, player, enemies_list, physics_handler):
         if not self.player_can_attack():
-            return []
+            return [], 0
         current_time = time.time()
         self.player_last_attack_time = current_time
-
+        max_range_attack = 0
         dead_targets = []
         for enemy in enemies_list:
             dx = player.center_x - enemy.center_x
             dy = player.center_y - enemy.center_y
             distance = (dx**2 + dy**2) ** 0.5
-            
+            if distance > max_range_attack:
+                max_range_attack = distance
             if distance < self.attack_range:
                 damage = self.calculate_damage(player.level, player.base_damage)
                 if enemy.take_damage(damage):
                     dead_targets.append(enemy)
-        return dead_targets
+        return dead_targets, max_range_attack
     
     def enemy_attack_player(self, enemy, player):
         damage = self.calculate_damage(player.level, enemy.damage)

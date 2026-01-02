@@ -66,6 +66,14 @@ class MenuState(arcade.View):
             anchor_x="center"
         )
         arcade.draw_text(
+            f"Press [A] to view Achievements",
+            self.window.width / 2,
+            self.window.height / 2 - 250,
+            arcade.color.WHITE,
+            font_size=20,
+            anchor_x="center"
+        )
+        arcade.draw_text(
             "WASD or Arrows to move | SPACE to attack",
             self.window.width / 2,
             50,
@@ -114,3 +122,5 @@ class MenuState(arcade.View):
             self.brain.quit_game()
         elif symbol == arcade.key.TAB:
             self.brain.set_state("LEADERBOARD")
+        elif symbol == arcade.key.A:
+            self.brain.set_state("ACHIEVEMENTS")

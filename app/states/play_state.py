@@ -22,7 +22,8 @@ class PlayState(arcade.View):
         self.player.center_x = SCREEN_WIDTH // 2
         self.player.center_y = SCREEN_HEIGHT // 2
         self.player_list.append(self.player)
-
+        self.traveled_distance = 0
+        self.tanked_damage = 0
         #loading map
         self.tilemap = load_game_map()
         self.scene = self.tilemap.scene
@@ -66,8 +67,9 @@ class PlayState(arcade.View):
         self.physics_handler.update()
         self.player_list.update(delta_time)
         self.player_list.update_animation(delta_time)
-
+        self.traveled_distance += (self.player.change_x**2 + self.player.change_y**2)**0.5
         dead_enemies = []
+        past_hp = self.player.current_hp
         for enemy in self.enemy_list:
             can_attack = enemy.update(delta_time, self.player)
             
@@ -76,11 +78,10 @@ class PlayState(arcade.View):
 
                 if self.player.current_hp <= 0:
                     self.game_over = True
-                    # TODO: Add game over state
             
             if enemy.current_hp <= 0:
                 dead_enemies.append(enemy)
-
+        self.tanked_damage += (past_hp - self.player.current_hp)
         for enemy in dead_enemies:
             xp_gained = self.combat_system.calculate_xp_gain(enemy.level, self.player.level)
             self.player.xp += xp_gained
@@ -105,6 +106,15 @@ class PlayState(arcade.View):
         if self.spawner.wave > NUMBER_OF_WAVES:
             is_high_score = self.brain.score > self.brain.high_score
             self.brain.new_score(self.brain.score)
+            #for Achievements
+            self.brain.achievements.update("Game Veteran", self.brain.game_time / 3600.0)
+            self.brain.achievements.update("Distance Traveled", self.traveled_distance)
+            self.brain.achievements.update("Game Master", self.brain.score)
+            self.brain.achievements.update("Barely Alive", self.player.current_hp)
+            self.brain.achievements.update("Total Winner", 1)
+            self.brain.achievements.update("Speed Runner", self.brain.game_time)
+            self.brain.achievements.update("Super Tank", self.tanked_damage)
+
             self.brain.set_state("WIN", is_high_score)
 
     def center_camera_to_player(self):
@@ -128,10 +138,16 @@ class PlayState(arcade.View):
         self.camera_gui.use()
         self.hud.draw(self.player, self.brain.score, self.wave_info, self.brain.game_time)
         if self.game_over:
+            #for Achievements
+            self.brain.achievements.update("Game Veteran", self.brain.game_time / 3600.0)
+            self.brain.achievements.update("Distance Traveled", self.traveled_distance)
+            self.brain.achievements.update("Super Tank", self.tanked_damage)
             self.brain.set_state("LOSE")
     def on_key_press(self, key, modifiers):
         self.keys_pressed.add(key)
-        
+        max_range = 0
+        dead_cnt = 0
+        dead_list = []
         # Player movement
         if key == arcade.key.W or key == arcade.key.UP:
             self.player.up_key = True
@@ -146,14 +162,22 @@ class PlayState(arcade.View):
             self.brain.set_state("PAUSE")
         elif key == arcade.key.Z:
             self.player.attack(1)
-            self.combat_system.process_attack(self.player,self.enemy_list,self.physics_handler)
+            dead_list, max_range = self.combat_system.process_attack(self.player,self.enemy_list,self.physics_handler)
         elif key == arcade.key.X:
             self.player.attack(2)
-            self.combat_system.process_attack(self.player,self.enemy_list,self.physics_handler)
+            dead_list, max_range = self.combat_system.process_attack(self.player,self.enemy_list,self.physics_handler)
         elif key == arcade.key.C:
             self.player.attack(3)
-            self.combat_system.process_attack(self.player,self.enemy_list,self.physics_handler)
-    
+            dead_list, max_range = self.combat_system.process_attack(self.player,self.enemy_list,self.physics_handler)
+        if dead_list:
+            dead_cnt = len(dead_list)
+        #for Achievements
+        if dead_cnt != 0:
+            self.brain.achievements.update("Multi Kill", dead_cnt)
+            self.brain.achievements.update("Total Killer", dead_cnt)
+        if max_range != 0:
+            self.brain.achievements.update("Sniper", max_range)
+
     def on_key_release(self, key, modifiers):
         if key in self.keys_pressed:
             self.keys_pressed.remove(key)

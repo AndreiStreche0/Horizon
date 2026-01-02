@@ -6,7 +6,8 @@ SCREEN_TITLE = "Horizon"
 COLOR_BACKGROUND_MENU = (30, 30, 40) # Dark Blue-ish
 COLOR_TEXT = (255, 255, 255)
 NUMBER_OF_WAVES = 1
-DATA_FILE = "data/player_data.json"
+PLAYERS_FILE = "data/player_data.json"
+ACHIVEMENTS_FILE = "data/achievements_data.json"
 
 PLAYABLE_CHARACTERS = {
     "knight": {

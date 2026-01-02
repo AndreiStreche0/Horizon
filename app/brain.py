@@ -8,13 +8,15 @@ from app.states.win_state import WinState
 from app.states.login_state import LoginState
 from app.states.leaderboard_state import LeaderboardState
 from app.states.character_selection_state import CharacterSelectState
+from app.achievements.achievement_manager import AchievementManager
+from app.states.achievements_state import AchievementState
 
 #handles game state and current session
 class Brain:
     def __init__(self, window):
         self.window = window
         self.authentificator = AuthentificationManager()
-
+        self.achievements = AchievementManager(self)
         self.score = 0
         self.current_level = 1
         if self.authentificator.current_user:
@@ -63,6 +65,9 @@ class Brain:
             self.window.show_view(view)
         elif state_type == "LEADERBOARD":
             view = LeaderboardState(self)
+            self.window.show_view(view)
+        elif state_type == "ACHIEVEMENTS":
+            view = AchievementState(self)
             self.window.show_view(view)
     def reset_game(self):
         self.score = 0
