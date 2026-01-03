@@ -2,6 +2,8 @@ import arcade
 import threading
 from config import SCREEN_WIDTH, SCREEN_HEIGHT, COLOR_BACKGROUND_MENU, COLOR_TEXT, PLAYABLE_CHARACTERS, ENEMIES
 from pathlib import Path
+from app.entities.enemy import get_enemy_assets
+from app.map.loader import load_game_map
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 
@@ -130,11 +132,9 @@ class CharacterSelectState(arcade.View):
                 "description": description
             }
 
-    def preload_enemy_assets(self):
-        from app.entities.enemy import get_enemy_assets
-        
+    def preload_resources(self):
         enemy_types = list(ENEMIES.keys())
-        total = len(enemy_types)
+        total = len(enemy_types) + 1 # enemies + map
         
         for i, enemy_type in enumerate(enemy_types):
             try:
@@ -143,6 +143,13 @@ class CharacterSelectState(arcade.View):
             except Exception as e:
                 print(f"Error loading {enemy_type}: {e}")
                 self.loading_progress = (i + 1) / total
+
+        try:
+            self.brain.current_map = load_game_map()
+        except Exception as e:
+            print(f"Error loading map: {e}")
+        finally:
+            self.loading_progress = 1.0
         
         self.loading_complete = True
 
@@ -150,7 +157,7 @@ class CharacterSelectState(arcade.View):
         self.is_loading = True
         self.loading_progress = 0.0
         self.loading_complete = False
-        self.loading_thread = threading.Thread(target=self.preload_enemy_assets, daemon=True)
+        self.loading_thread = threading.Thread(target=self.preload_resources, daemon=True)
         self.loading_thread.start()
 
     def on_show_view(self):

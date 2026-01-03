@@ -12,7 +12,7 @@ PLAYABLE_CHARACTERS = {
         "description": "Balanced warrior",
         "folder": "knight",
         "hp": 100,
-        "speed": 10,
+        "speed": 8,
         "damage": 25,
         "animations_frames": {
             "idle": 6,
@@ -58,7 +58,7 @@ PLAYABLE_CHARACTERS = {
         "description": "Heavy armored fighter",
         "folder": "templar",
         "hp": 150,
-        "speed": 15,
+        "speed": 10,
         "damage": 20,
         "animations_frames": {
             "idle": 6,
@@ -104,7 +104,7 @@ PLAYABLE_CHARACTERS = {
         "description": "High damage dealer",
         "folder": "axeman",
         "hp": 80,
-        "speed": 20,
+        "speed": 12,
         "damage": 30,
         "animations_frames": {
             "idle": 6,
@@ -381,8 +381,8 @@ ENEMIES = {
     }
 }
 
-ENEMY_SPEED = 0.5
+ENEMY_SPEED = 3
 NUMBER_OF_WAVES = 5
 
-MAP_WIDTH = 2280
-MAP_HEIGHT = 1560
+MAP_WIDTH = 8192
+MAP_HEIGHT = 8192

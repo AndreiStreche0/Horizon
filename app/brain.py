@@ -8,7 +8,7 @@ class Brain:
         
         self.score = 0
         self.current_level = 1
-        #TODO change this when sttorage is implemented
+
         self.high_score = 0
         self.username = "Player"
         self.selected_character = "knight"  # Default character

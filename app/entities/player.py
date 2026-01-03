@@ -217,7 +217,6 @@ class Player(Entity):
         self.death_hold_time = 1.0
 
     def level_up(self):
-        #TODO add something for UI, a level up animation
         self.level += 1
         self.max_hp += self.level * 15
         self.current_hp = self.max_hp

@@ -235,7 +235,28 @@ class Enemy(Entity):
                     self.change_x = (dx / distance) * self.speed
                     self.change_y = (dy / distance) * self.speed
 
-                if distance < self.attack_range:
+                # Check if player is within attack hitbox range on both X and Y axes
+                attack_config = self.enemy_data["attacks"]["attack1"]
+                hitbox_offset_x = attack_config["hitbox"]["offset_x"]
+                hitbox_width = attack_config["hitbox"]["width"]
+                hitbox_offset_y = attack_config["hitbox"]["offset_y"]
+                hitbox_height = attack_config["hitbox"].get("height", attack_config["hitbox"].get("height:", 100))
+                
+                # Calculate the maximum reach on x-axis
+                max_reach_x = hitbox_offset_x + (hitbox_width / 2)
+                
+                # Calculate the maximum reach on y-axis (full hitbox height)
+                max_reach_y = hitbox_height / 2
+                
+                # Get absolute distances
+                abs_dx = abs(dx)
+                abs_dy = abs(dy)
+                
+                # Check if player is within attack range on BOTH axes
+                in_range_x = abs_dx <= max_reach_x
+                in_range_y = abs_dy <= max_reach_y
+                
+                if in_range_x and in_range_y:
                     if self.attack_timer <= 0:
                         self.attack_timer = self.attack_cooldown
                         # Randomly choose attack type

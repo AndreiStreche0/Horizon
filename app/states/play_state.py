@@ -18,17 +18,19 @@ class PlayState(arcade.View):
         #initializing player
         character = getattr(self.brain, 'selected_character', 'knight')
         self.player = Player(character)
-        self.player.center_x = SCREEN_WIDTH // 2
-        self.player.center_y = SCREEN_HEIGHT // 2
+        self.player.center_x = 2500
+        self.player.center_y = 7500
         self.player_list.append(self.player)
         self.entity_list.append(self.player)
 
         #loading map
-        self.tilemap = load_game_map()
+        if self.brain.current_map is None:
+            self.brain.current_map = load_game_map()
+        self.tilemap = self.brain.current_map
         self.scene = self.tilemap.scene
 
         #loading walls
-        self.wall_list = self.scene.get_sprite_list("Walls")
+        self.wall_list = self.tilemap.get_walls()
 
         #initializing physics logic
         self.physics_handler = PhysicsHandler(self.player, self.wall_list)
@@ -96,6 +98,7 @@ class PlayState(arcade.View):
             self.player.xp += xp_gained
             self.brain.score += xp_gained * 10 * random.uniform(0.85, 1.15)
             self.physics_handler.remove_enemy_hitbox(enemy)
+            self.spawner.on_enemy_killed()
             self.enemy_list.remove(enemy)
             self.entity_list.remove(enemy)
 
