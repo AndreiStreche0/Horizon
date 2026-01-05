@@ -5,12 +5,13 @@ class WinState(arcade.View):
     def __init__(self, brain, is_high_score):
         super().__init__()
         self.brain = brain
-        self.is_high_score = is_high_score
         
         self.camera = arcade.camera.Camera2D()
         self.camera.bottom_left = (0, 0)
         
         self.window.background_color = (0, 50, 0)
+        
+        self.is_new_high_score = self.brain.save_score(is_win=True, player=self.brain.player)
 
     def on_draw(self):
         self.clear()
@@ -20,7 +21,7 @@ class WinState(arcade.View):
         cy = self.window.height / 2
 
         #title
-        arcade.draw_text(
+        victory_text = arcade.Text(
             "VICTORY!",
             x=cx, y=cy + 100,
             color=arcade.color.GOLD,
@@ -28,10 +29,11 @@ class WinState(arcade.View):
             anchor_x="center",
             bold=True
         )
+        victory_text.draw()
         
-        #set new high score
-        if self.is_high_score:
-            arcade.draw_text(
+        # Afișează "NEW HIGH SCORE!" doar dacă e cazul
+        if self.is_new_high_score:
+            new_high_score_text = arcade.Text(
                 "NEW HIGH SCORE!",
                 x=cx, y=cy + 40,
                 color=arcade.color.CYAN,
@@ -39,32 +41,37 @@ class WinState(arcade.View):
                 anchor_x="center",
                 bold=True
             )
+            new_high_score_text.draw()
 
         #final score
-        arcade.draw_text(
+        final_score_text = arcade.Text(
             f"Final Score: {int(self.brain.score)}",
             x=cx, y=cy - 20,
             color=COLOR_TEXT,
             font_size=24,
             anchor_x="center"
         )
+        final_score_text.draw()
         
         #play again
-        arcade.draw_text(
+        play_again_text = arcade.Text(
             "Press [R] to Play Again",
             x=cx, y=cy - 100,
             color=arcade.color.YELLOW,
             font_size=20,
             anchor_x="center"
         )
+        play_again_text.draw()
+
         #go to menu
-        arcade.draw_text(
+        menu_text = arcade.Text(
             "Press [Q] for Menu",
             x=cx, y=cy - 140,
             color=arcade.color.WHITE,
             font_size=16,
             anchor_x="center"
         )
+        menu_text.draw()
 
     def on_key_press(self, symbol, modifiers):
         if symbol == arcade.key.R:
