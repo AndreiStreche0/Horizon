@@ -3,6 +3,7 @@
 ## ***Authors***
 - Andrei-Daniel BOGHICI (AndreiB2005)
 - Andrei-Claudiu STRECHE (AndreiStreche0)
+Link: https://github.com/AndreiStreche0/Horizon.git
 
 ## ***Description***
 Horizon is a 2D Action-Survival videogame in which the player has to defeat a great variety of enemies and survive a number of waves in order to win. The player can also achieve different scores and reach a number of achievements, giving them the possibility to improve their skills and replay the game each time with different goals set in mind.
@@ -26,6 +27,7 @@ Run the following commands in your terminal:
 > python3 -m venv venv
 > source venv/bin/activate
 > pip install arcade
+> pip install bcrypt
 > python3 main.py
 
 ## ***Game Features***
@@ -88,6 +90,9 @@ We encountered critical issues when implementing full-screen mode. The full-scre
 **Current Workaround**: The game uses fixed screen dimensions (1920x1080 by default), which can be easily modified by users in [config.py](config.py) by changing the `SCREEN_WIDTH` and `SCREEN_HEIGHT` values.
 
 ### Known Issues
+
+#### Map Loading
+While the map itself loads just fine, it might take a few minutes for it to load, depends on the device
 
 #### Visual Bugs
 - Occasional visual glitches may occur during state transitions
