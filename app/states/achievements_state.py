@@ -1,7 +1,7 @@
 import arcade
 import arcade.gui
 from app.achievements.achievement import ACHIEVEMENT_LIST
-from config import SCREEN_WIDTH, SCREEN_HEIGHT, COLOR_TEXT
+from config import SCREEN_WIDTH, SCREEN_HEIGHT, COLOR_TEXT, COLOR_BACKGROUND_MENU
 
 class AchievementState(arcade.View):
     def __init__(self, brain):
@@ -13,7 +13,7 @@ class AchievementState(arcade.View):
         self.medal_gold_tex = arcade.load_texture(":resources:images/items/coinGold.png")
         self.medal_silver_tex = arcade.load_texture(":resources:images/items/coinSilver.png")
         self.medal_bronze_tex = arcade.load_texture(":resources:images/items/coinBronze.png")
-        self.medal_none_tex = arcade.load_texture(":resources:images/tiles/lockRed.png")
+        self.medal_none_tex = arcade.load_texture(":resources:onscreen_controls/shaded_dark/x.png")
 
         #main vertical box layout
         self.v_box = arcade.gui.UIBoxLayout(vertical=True, space_between=8)
@@ -60,7 +60,7 @@ class AchievementState(arcade.View):
             name_label = arcade.gui.UILabel(
                 text=ach.name,
                 text_color=arcade.color.DARK_VIOLET,
-                font_size=14,
+                font_size=16,
                 width=450,
                 align="left",
                 bold=True
@@ -68,7 +68,7 @@ class AchievementState(arcade.View):
             desc_label = arcade.gui.UILabel(
                 text=desc_text,
                 text_color=arcade.color.PLUM,
-                font_size=8,
+                font_size=12,
                 width=450,
                 align="left"
             )
@@ -80,8 +80,8 @@ class AchievementState(arcade.View):
             if medal_texture:
                 icon = arcade.gui.UITextureButton(
                     texture=medal_texture,
-                    width=24,
-                    height=24
+                    width=30,
+                    height=30
                 )
                 row.add(icon)
             row_wrapper = row.with_padding(top=5, bottom=5)            
@@ -97,7 +97,7 @@ class AchievementState(arcade.View):
     def on_draw(self):
         self.clear()
         bg_rect = arcade.rect.XYWH(0, 0, self.window.width, self.window.height)
-        arcade.draw_rect_filled(bg_rect, (20, 20, 30))
+        arcade.draw_rect_filled(bg_rect, COLOR_BACKGROUND_MENU)
         self.manager.draw()
 
     def on_key_press(self, symbol, modifiers):

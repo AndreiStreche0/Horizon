@@ -1,14 +1,19 @@
-SCREEN_WIDTH = 1024
-SCREEN_HEIGHT = 768
+# RECOMMENDED SIZES 
+#1. Retro: 800 x 600
+#2. Small: 1024 x 768
+#3. Big: 1280 x 720
+#4. Large Monitor: 1600 x 900
+#5. Default: 1920 x 1080
+SCREEN_WIDTH = 1920
+SCREEN_HEIGHT = 1080
 SCREEN_TITLE = "Horizon"
 
 #Temporary data, they can change
-COLOR_BACKGROUND_MENU = (30, 30, 40) # Dark Blue-ish
+COLOR_BACKGROUND_MENU = (30, 30, 40)
 COLOR_TEXT = (255, 255, 255)
-NUMBER_OF_WAVES = 1
+NUMBER_OF_WAVES = 2
 PLAYERS_FILE = "data/player_data.json"
 ACHIVEMENTS_FILE = "data/achievements_data.json"
-
 PLAYABLE_CHARACTERS = {
     "knight": {
         "name": "Knight",
@@ -63,7 +68,6 @@ PLAYABLE_CHARACTERS = {
     }
 }
 ENEMY_SPEED = 0.5
-NUMBER_OF_WAVES = 1
 
 MAP_WIDTH = 2280
 MAP_HEIGHT = 1560

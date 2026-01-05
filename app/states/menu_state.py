@@ -1,5 +1,5 @@
 import arcade
-from config import SCREEN_WIDTH, SCREEN_HEIGHT, COLOR_BACKGROUND_MENU, COLOR_TEXT
+from config import COLOR_BACKGROUND_MENU, COLOR_TEXT
 
 class MenuState(arcade.View):
     def __init__(self, brain):
@@ -12,8 +12,6 @@ class MenuState(arcade.View):
 
     def on_draw(self):
         self.clear()
-        
-        # Draw Title
         arcade.draw_text(
             "HORIZON",
             self.window.width / 2,
@@ -85,7 +83,7 @@ class MenuState(arcade.View):
         arcade.draw_text(
             f"User: {self.brain.username}",
             x=20, 
-            y=SCREEN_HEIGHT - 40,
+            y=self.window.height - 40,
             color=arcade.color.LIGHT_CORNFLOWER_BLUE,
             font_size=16,
             anchor_x="left"
@@ -94,7 +92,7 @@ class MenuState(arcade.View):
         arcade.draw_text(
             "Press [L] to Change User",
             x=20, 
-            y=SCREEN_HEIGHT - 70,
+            y=self.window.height - 70,
             color=(150, 150, 150),
             font_size=12,
             anchor_x="left"
@@ -103,7 +101,7 @@ class MenuState(arcade.View):
         arcade.draw_text(
             "Press [TAB] to View LEADERBOARD",
             x=20, 
-            y=SCREEN_HEIGHT - 120,
+            y=self.window.height - 120,
             color=arcade.color.LIGHT_CORNFLOWER_BLUE,
             font_size=14,
             anchor_x="left"

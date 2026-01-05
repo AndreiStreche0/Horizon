@@ -1,6 +1,6 @@
 import arcade
 import arcade.gui
-from config import SCREEN_WIDTH, SCREEN_HEIGHT, COLOR_TEXT
+from config import SCREEN_WIDTH, SCREEN_HEIGHT, COLOR_TEXT, COLOR_BACKGROUND_MENU
 
 class LeaderboardState(arcade.View):
     def __init__(self, brain):
@@ -84,7 +84,7 @@ class LeaderboardState(arcade.View):
         self.clear()
         
         bg_rect = arcade.rect.XYWH(0, 0, self.window.width, self.window.height)
-        arcade.draw_rect_filled(bg_rect, (20, 20, 30))
+        arcade.draw_rect_filled(bg_rect, COLOR_BACKGROUND_MENU)
         
         self.manager.draw()
 

@@ -48,7 +48,9 @@ class PlayState(arcade.View):
 
         #keeping track of input
         self.keys_pressed = set()
-
+        self.current_wave_number = 1
+        self.low_health_alert_timer = 0 
+        self.showed_first_wave = False
         self.game_over = False
         self.wave_info = self.spawner.get_wave_info()
         #TODO add ui text : game started and maybe some basic instructions
@@ -63,6 +65,7 @@ class PlayState(arcade.View):
             return
         
         self.brain.game_time += delta_time
+        self.hud.update(delta_time)
         self.player.update_movement()
         self.physics_handler.update()
         self.player_list.update(delta_time)
@@ -82,6 +85,14 @@ class PlayState(arcade.View):
             if enemy.current_hp <= 0:
                 dead_enemies.append(enemy)
         self.tanked_damage += (past_hp - self.player.current_hp)
+
+        hp_percent = self.player.current_hp / self.player.max_hp
+        if hp_percent < 0.10 and self.player.current_hp > 0:
+            self.low_health_alert_timer -= delta_time
+            if self.low_health_alert_timer <= 0:
+                self.hud.add_message("LOW HEALTH!", arcade.color.RED, duration=1.0)
+                self.low_health_alert_timer = 5.0
+
         for enemy in dead_enemies:
             xp_gained = self.combat_system.calculate_xp_gain(enemy.level, self.player.level)
             self.player.xp += xp_gained
@@ -96,14 +107,21 @@ class PlayState(arcade.View):
 
         if self.combat_system.check_level_up(self.player):
             self.player.level_up()
-
+        
         self.spawner.update(delta_time, self.enemy_list)
         self.wave_info = self.spawner.get_wave_info()
 
         self.center_camera_to_player()
         self.brain.enemies = self.enemy_list
 
-        if self.spawner.wave > NUMBER_OF_WAVES:
+        if (self.spawner.wave > self.current_wave_number or self.current_wave_number == 1 and self.showed_first_wave == False) and self.spawner.wave <= NUMBER_OF_WAVES:
+            self.current_wave_number = self.spawner.wave
+            self.showed_first_wave = True
+            self.hud.add_message(f"WAVE {self.current_wave_number} STARTED!", arcade.color.PURPLE, duration=3.0)
+
+        if self.spawner.wave > NUMBER_OF_WAVES and len(self.enemy_list) == 0:
+            score_bonus = max(0, 2500 - (7 * self.brain.game_time))
+            self.brain.score += score_bonus
             is_high_score = self.brain.score > self.brain.high_score
             self.brain.new_score(self.brain.score)
             #for Achievements
@@ -148,7 +166,7 @@ class PlayState(arcade.View):
         max_range = 0
         dead_cnt = 0
         dead_list = []
-        # Player movement
+        #player movement
         if key == arcade.key.W or key == arcade.key.UP:
             self.player.up_key = True
         elif key == arcade.key.S or key == arcade.key.DOWN:
@@ -157,7 +175,7 @@ class PlayState(arcade.View):
             self.player.left_key = True
         elif key == arcade.key.D or key == arcade.key.RIGHT:
             self.player.right_key = True
-        # Game control
+        #game control
         elif key == arcade.key.ESCAPE:
             self.brain.set_state("PAUSE")
         elif key == arcade.key.Z:
@@ -177,6 +195,18 @@ class PlayState(arcade.View):
             self.brain.achievements.update("Total Killer", dead_cnt)
         if max_range != 0:
             self.brain.achievements.update("Sniper", max_range)
+
+        if dead_cnt > 0:
+            if dead_cnt == 1:
+                self.hud.add_message("Enemy Slain", arcade.color.YELLOW, 0.75)
+            elif dead_cnt == 2:
+                self.hud.add_message("DOUBLE KILL!", arcade.color.DARK_YELLOW, 1.5)
+            elif dead_cnt == 3:
+                self.hud.add_message("TRIPLE KILL!", arcade.color.ORANGE, 2.25)
+            elif dead_cnt == 4:
+                self.hud.add_message("QUADRA KILL!", arcade.color.RED, 3.5)
+            elif dead_cnt >= 5:
+                self.hud.add_message("PENTA KILL!", arcade.color.VIOLET, 5)
 
     def on_key_release(self, key, modifiers):
         if key in self.keys_pressed:

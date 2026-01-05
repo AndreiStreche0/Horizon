@@ -1,4 +1,6 @@
 import arcade
+from arcade import LBWH
+
 from config import SCREEN_WIDTH, SCREEN_HEIGHT, COLOR_BACKGROUND_MENU, COLOR_TEXT
 class PauseState(arcade.View):
     def __init__(self, brain, previous_view):
@@ -6,8 +8,6 @@ class PauseState(arcade.View):
         self.brain = brain
         self.brain.is_paused = True
         self.previous_view = previous_view
-        self.camera = arcade.camera.Camera2D()
-        self.camera.bottom_left = (0, 0) 
 
     def on_show_view(self):
         pass
@@ -17,8 +17,9 @@ class PauseState(arcade.View):
         if self.previous_view:
             self.previous_view.on_draw()
 
-        self.camera.use()
-        overlay_rect = arcade.rect.XYWH(0, 0, self.window.width, self.window.height)
+        self.window.default_camera.use()
+
+        overlay_rect = LBWH(0, 0, self.window.width, self.window.height)
         arcade.draw_rect_filled(overlay_rect, (0, 0, 0, 150))
         
         #draw pause text
@@ -64,11 +65,11 @@ class PauseState(arcade.View):
         )
     def on_key_press(self, symbol, modifiers):
         if symbol == arcade.key.ESCAPE:
-            # Resume game
+            #resume game
             self.brain.is_paused = False
             self.window.show_view(self.previous_view)
             
         elif symbol == arcade.key.Q:
-            # Quit to main menu
+            #quit to main menu
             self.brain.reset_game()
             self.brain.set_state("MENU")
