@@ -1,0 +1,38 @@
+{
+    "Astds": {
+        "password": "$2b$10$8lL.WeMwmJSWpydBfCxDIOGMU2zijcH8yZ3Hldhg839U33nIh/Mve",
+        "best_score": 0,
+        "games_played": 0,
+        "total_time_played": 0,
+        "damage_taken": 0,
+        "enemies_defeated": 0,
+        "distance_traveled": 0,
+        "win_streak": 0,
+        "best_win_streak": 0,
+        "deaths": 0,
+        "total_distance_traveled": 0
+    },
+    "Guest": {
+        "best_score": 330,
+        "games_played": 2,
+        "total_time_played": 75.0594281440026,
+        "damage_taken": 0,
+        "enemies_defeated": 3,
+        "total_distance_traveled": 0.0,
+        "deaths": 2,
+        "win_streak": 0,
+        "best_win_streak": 0
+    },
+    "assa": {
+        "password": "$2b$10$ocqppAfx56tSzUUDSW3BT.2DjKvn2iUuBr0qazU6HCRUg896nKiVW",
+        "best_score": 0,
+        "games_played": 0,
+        "total_time_played": 0,
+        "damage_taken": 0,
+        "enemies_defeated": 0,
+        "distance_traveled": 0,
+        "win_streak": 0,
+        "best_win_streak": 0,
+        "deaths": 0
+    }
+}

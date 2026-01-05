@@ -1,6 +1,5 @@
 import arcade
 import arcade.gui
-from app.achievements.achievement import ACHIEVEMENT_LIST
 from config import SCREEN_WIDTH, SCREEN_HEIGHT, COLOR_TEXT, COLOR_BACKGROUND_MENU
 from app.achievements.achievement import AchievementTier
 from config import SCREEN_WIDTH, SCREEN_HEIGHT, COLOR_BACKGROUND_MENU, COLOR_TEXT

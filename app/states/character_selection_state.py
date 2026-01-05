@@ -170,7 +170,7 @@ class CharacterSelectState(arcade.View):
             self.brain.set_state("PLAY")
             return
 
-        # Animate character sprites
+        # animate character sprites
         if not self.is_loading:
             for char_key in self.characters:
                 if char_key in self.character_textures and self.character_textures[char_key]:

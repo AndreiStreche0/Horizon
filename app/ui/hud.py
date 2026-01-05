@@ -4,27 +4,12 @@ from config import SCREEN_WIDTH, SCREEN_HEIGHT
 class HUD:
     def __init__(self):
         self.camera = arcade.camera.Camera2D()
-        self.messages = []
-
-    def add_message(self, text, color=arcade.color.WHITE, duration=1.0):
-        self.messages.append({
-            'text': text,
-            'color': color,
-            'time': duration,
-        })
-    def remove_message(self, message):
-        self.messages.remove(message)
-    
-    def update(self, delta_time):
-        for msg in self.messages:
-            msg['time'] -= delta_time
-            if (msg['time'] < 0):
-                self.remove_message(msg)
 
         self.bar_width = 200
         self.bar_height = 20
         self.bg_x = (SCREEN_WIDTH // 2) - (self.bar_width / 2)
         self.bg_y = SCREEN_HEIGHT - 20 - (self.bar_height / 2)
+        self.messages = []
 
         self.hp_text = arcade.Text(
             text="",
@@ -87,11 +72,21 @@ class HUD:
             font_size=16,
             anchor_x="center",
         )
-
+    def add_message(self, text, color=arcade.color.WHITE, duration=1.0):
+        self.messages.append({
+            'text': text,
+            'color': color,
+            'time': duration
+        })
+        
+    def update(self, delta_time):
+        for msg in self.messages:
+            msg['time'] -= delta_time
+        
+        self.messages = [msg for msg in self.messages if msg['time'] > 0]
     def draw(self, player, score, wave_info, game_time):
         self.camera.use()
 
-        #health bar
         bg_rect = arcade.rect.XYWH(self.bg_x, self.bg_y, self.bar_width, self.bar_height)
         arcade.draw_rect_filled(bg_rect, (50, 50, 50))
 
@@ -107,7 +102,6 @@ class HUD:
         fill_rect = arcade.rect.XYWH(self.bg_x, self.bg_y, health_width, self.bar_height)
         arcade.draw_rect_filled(fill_rect, health_color)
 
-        #text
         hp_val = round(player.current_hp)
         self.hp_text.text = f"HP: {hp_val}/{player.max_hp}"
         self.hp_text.draw()
@@ -128,8 +122,8 @@ class HUD:
         for msg in self.messages:
             arcade.draw_text(
                 msg['text'],
-                window.width - 200,
-                window.height / 2 + 300 + y_offset,
+                SCREEN_WIDTH - 200,
+                SCREEN_HEIGHT / 2 + 300 + y_offset,
                 msg['color'],
                 font_size=30,
                 anchor_x="center",

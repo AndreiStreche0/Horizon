@@ -105,7 +105,19 @@ class PlayState(arcade.View):
         else:
             if self.current_attack_kills > 0:
                 self.check_killtacular_achievement(self.current_attack_kills)
+                if self.current_attack_kills == 1:
+                    self.hud.add_message("Enemy Slain", arcade.color.YELLOW, 0.75)
+                elif self.current_attack_kills == 2:
+                    self.hud.add_message("DOUBLE KILL!", arcade.color.DARK_YELLOW, 1.5)
+                elif self.current_attack_kills == 3:
+                    self.hud.add_message("TRIPLE KILL!", arcade.color.ORANGE, 2.25)
+                elif self.current_attack_kills == 4:
+                    self.hud.add_message("QUADRA KILL!", arcade.color.RED, 3.5)
+                elif self.current_attack_kills >= 5:
+                    self.hud.add_message("PENTA KILL!", arcade.color.VIOLET, 5)
+
                 self.current_attack_kills = 0
+
 
         for enemy in dead_enemies:
             xp_gained = self.combat_system.calculate_xp_gain(enemy.level, self.player.level)
@@ -187,10 +199,6 @@ class PlayState(arcade.View):
 
     def on_key_press(self, key, modifiers):
         self.keys_pressed.add(key)
-        max_range = 0
-        dead_cnt = 0
-        dead_list = []
-        #player movement
         
         # Player movement
         if key == arcade.key.W or key == arcade.key.UP:
@@ -213,22 +221,6 @@ class PlayState(arcade.View):
         elif key == arcade.key.C:
             self.combat_system.on_player_attack_start()
             self.player.attack(3)
-            dead_list, max_range = self.combat_system.process_attack(self.player,self.enemy_list,self.physics_handler)
-        if dead_list:
-            dead_cnt = len(dead_list)
-            
-        if dead_cnt > 0:
-            if dead_cnt == 1:
-                self.hud.add_message("Enemy Slain", arcade.color.YELLOW, 0.75)
-            elif dead_cnt == 2:
-                self.hud.add_message("DOUBLE KILL!", arcade.color.DARK_YELLOW, 1.5)
-            elif dead_cnt == 3:
-                self.hud.add_message("TRIPLE KILL!", arcade.color.ORANGE, 2.25)
-            elif dead_cnt == 4:
-                self.hud.add_message("QUADRA KILL!", arcade.color.RED, 3.5)
-            elif dead_cnt >= 5:
-                self.hud.add_message("PENTA KILL!", arcade.color.VIOLET, 5)
-
     
     def on_key_release(self, key, modifiers):
         if key in self.keys_pressed:

@@ -123,13 +123,13 @@ class Enemy(Entity):
                 self.current_animation = "idle"
                 self.current_texture = 0
 
-        # Update facing direction based on movement
+        #update facing direction based on movement
         if self.change_x < 0:
             self.facing_right = False
         elif self.change_x > 0:
             self.facing_right = True
 
-        # Animate textures
+        #animate textures
         self.animation_timer += delta_time
         if self.animation_timer >= self.animation_speed:
             self.animation_timer = 0.0
