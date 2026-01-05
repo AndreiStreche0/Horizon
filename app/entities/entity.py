@@ -11,6 +11,33 @@ class Entity(arcade.Sprite):
         self.hit_flash_timer = 0
         self.hit_flash_duration = 0.2
 
+        self._set_hit_box = ([
+            (-40, -30),
+            (40, -30),
+            (40, 30),
+            (-40, 30)
+        ])
+
+        self._apply_custom_hit_box(self._set_hit_box)
+
+    def _apply_custom_hit_box(self, points):
+        if hasattr(self, "set_hit_box"):
+            try:
+                self.set_hit_box(points)
+                return
+            except Exception:
+                pass
+        if hasattr(self, "set_hit_box_points"):
+            try:
+                self.set_hit_box_points(points)
+                return
+            except Exception:
+                pass
+        try:
+            self.hit_box_points = points
+        except Exception:
+            pass
+
     def update(self):
         super().update()
 
@@ -18,14 +45,3 @@ class Entity(arcade.Sprite):
         self.current_hp -= amount
         if self.current_hp < 0:
             self.current_hp = 0
-        self.hit_flash_timer = self.hit_flash_duration
-        #red flash
-        self.color = (255, 100, 100)
-        
-        return self.current_hp <= 0
-
-    def update_flash_animation(self, delta_time):
-        if self.hit_flash_timer > 0:
-            self.hit_flash_timer -= delta_time
-            if self.hit_flash_timer <= 0:
-                self.color = (255, 255, 255)

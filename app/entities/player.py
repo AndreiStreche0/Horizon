@@ -11,15 +11,13 @@ class Player(Entity):
         self.character_data = PLAYABLE_CHARACTERS[character_type]
         
         # Entity(texture, scale, max_hp)
-        super().__init__(None, 1.0, self.character_data["hp"])
+        super().__init__(BASE_DIR / f"assets/player/{self.character_data['folder']}/idle/idle_0.png", 1.0, self.character_data["hp"])
 
         # Player-specific stats from character data
         self.speed = self.character_data["speed"]
         self.damage = self.character_data["damage"]
         self.xp = 0
         self.level = 1
-        # TODO can be changed for better logic, this is temporary
-        self.base_damage = 1000
         
         self.left_key = False
         self.right_key = False
@@ -36,7 +34,8 @@ class Player(Entity):
         self.death_textures = []
         self.current_texture = 0
         self.animation_timer = 0
-        self.animation_speed = 0.1
+        self.animation_speed = 0.08
+        self.death_hold_time = 0.0
 
         self.current_animation = "idle"
         self.facing_right = True
@@ -44,6 +43,16 @@ class Player(Entity):
         self.is_hurt = False
         self.is_dead = False
         self.animation_finished = False
+
+        self.current_attack_type = 1
+
+        self.session_damage_taken = 0
+        self.flawless_waves = 0
+        self.damage_taken_this_wave = 0
+
+        self.session_distance_traveled = 0.0
+        self.last_x = 2500
+        self.last_y = 7500
 
         self.load_animations()
 
@@ -79,8 +88,16 @@ class Player(Entity):
 
     def update(self, delta_time: float):
         if not self.is_dead:
+            old_x = self.center_x
+            old_y = self.center_y
+
             self.center_x += self.change_x * delta_time
             self.center_y += self.change_y * delta_time
+
+            dx = self.center_x - old_x
+            dy = self.center_y - old_y
+            distance = (dx * dx + dy * dy) ** 0.5
+            self.session_distance_traveled += distance
 
         if self.is_dead:
             if self.current_animation != "death":
@@ -129,19 +146,29 @@ class Player(Entity):
             else:
                 textures = self.idle_textures
 
-            self.current_texture = (self.current_texture + 1) % len(textures)
-
-            if self.current_texture == 0:
-                self.animation_finished = True
-                if self.is_hurt:
-                    self.is_hurt = False
-                if self.is_attacking:
-                    self.is_attacking = False
-
+            if self.current_animation == "death":
+                if self.current_texture < len(textures) - 1:
+                    self.current_texture += 1
+                    if self.current_texture == len(textures) - 1:
+                        self.animation_finished = True
+                else:
+                    self.animation_finished = True
+            else:
+                self.current_texture = (self.current_texture + 1) % len(textures)
+                if self.current_texture == 0:
+                    self.animation_finished = True
+                    if self.is_hurt:
+                        self.is_hurt = False
+                    if self.is_attacking:
+                        self.is_attacking = False
+            
             if self.facing_right:
                 self.texture = textures[self.current_texture]["right"]
             else:
                 self.texture = textures[self.current_texture]["left"]
+
+        if self.is_dead and self.current_texture >= len(self.death_textures) - 1:
+            self.death_hold_time = max(0.0, self.death_hold_time - delta_time)
 
     def update_movement(self):
         if self.is_attacking or self.is_hurt or self.is_dead:
@@ -171,6 +198,7 @@ class Player(Entity):
             self.animation_finished = False
             self.change_x = 0
             self.change_y = 0
+            self.current_attack_type = attack_type
             
             if attack_type == 1:
                 self.current_animation = "attack1"
@@ -184,6 +212,8 @@ class Player(Entity):
     def take_damage(self, damage):
         if not self.is_dead:
             self.current_hp -= damage
+            self.session_damage_taken += damage
+            self.damage_taken_this_wave += damage
             if self.current_hp <= 0:
                 self.current_hp = 0
                 self.die()
@@ -202,9 +232,14 @@ class Player(Entity):
         self.change_y = 0
         self.current_animation = "death"
         self.current_texture = 0
+        self.death_hold_time = 1.0
+
+    def reset_wave_damage(self):
+        if self.damage_taken_this_wave == 0:
+            self.flawless_waves += 1
+        self.damage_taken_this_wave = 0
 
     def level_up(self):
-        #TODO add something for UI, a level up animation
         self.level += 1
         self.max_hp += self.level * 15
         self.current_hp = self.max_hp

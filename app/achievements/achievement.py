@@ -1,21 +1,47 @@
+from enum import Enum
+
+class AchievementTier(Enum):
+    BRONZE = 0
+    SILVER = 1
+    GOLD = 2
+
 class Achievement:
-    def __init__(self, name, description, tiers, type="max", reverse=False):
+    def __init__(self, name, description, tiers):
         self.name = name
         self.description = description
-        self.tiers = tiers
-        self.type = type    # "total" (over all games) or "max" (single game best)
-        self.reverse = reverse #true if lowest value is best
+        self.tiers = tiers  # [bronze, silver, gold]
+        self.unlockedTier = None  # None, BRONZE, SILVER, or GOLD
         
-
-ACHIEVEMENT_LIST = [
-    Achievement("Game Master", "high score", tiers = [2000, 2500, 3000], type="max"),
-    Achievement("Total Killer", "total kills", tiers = [100, 250, 750], type="total"),
-    Achievement("Super Tank", "total damage taken", tiers = [5000, 10000, 30000], type="total"),
-    Achievement("Game Veteran", "number of hours played", tiers = [5, 10, 25], type="total"),
-    Achievement("Total Winner", "number of total wins", tiers = [15, 30, 75], type="total"),
-    Achievement("Speed Runner", "fastest win", tiers = [70, 50, 40], type="max", reverse=True),
-    Achievement("Distance Traveled", "highest distance",tiers = [5000, 7500, 12000], type="max"),
-    Achievement("Barely Alive", "win with HP lower than", tiers = [20, 10, 3], type="max", reverse=True),
-    Achievement("Multi Kill", "kills in one attack", tiers = [2, 3, 4], type="max"),
-    Achievement("Sniper", "biggest kill range", tiers = [450, 475, 490], type="max"),
-]
+    def get_tier_name(self, tier):
+        tier_names = {
+            AchievementTier.BRONZE: "Bronze",
+            AchievementTier.SILVER: "Silver",
+            AchievementTier.GOLD: "Gold"
+        }
+        return tier_names.get(tier, "Unknown")
+    
+    def get_description_for_tier(self, tier):
+        if tier == AchievementTier.BRONZE:
+            return self.description % self.tiers[0]
+        elif tier == AchievementTier.SILVER:
+            return self.description % self.tiers[1]
+        elif tier == AchievementTier.GOLD:
+            return self.description % self.tiers[2]
+        return self.description
+    
+    def get_current_description(self):
+        if self.unlockedTier:
+            return self.get_description_for_tier(self.unlockedTier)
+        return self.description % self.tiers[0]
+    
+    def unlock(self, tier):
+        if self.unlockedTier is None or tier.value > self.unlockedTier.value:
+            self.unlockedTier = tier
+            return True
+        return False
+    
+    def is_unlocked(self):
+        return self.unlockedTier is not None
+    
+    def get_tier_value(self, tier):
+        return self.tiers[tier.value]

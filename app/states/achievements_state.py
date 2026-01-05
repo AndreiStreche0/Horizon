@@ -1,108 +1,120 @@
 import arcade
-import arcade.gui
-from app.achievements.achievement import ACHIEVEMENT_LIST
-from config import SCREEN_WIDTH, SCREEN_HEIGHT, COLOR_TEXT
+from app.achievements.achievement import AchievementTier
+from config import SCREEN_WIDTH, SCREEN_HEIGHT, COLOR_BACKGROUND_MENU, COLOR_TEXT
 
-class AchievementState(arcade.View):
+class AchievementsState(arcade.View):
     def __init__(self, brain):
         super().__init__()
         self.brain = brain
-        self.manager = arcade.gui.UIManager()
-        self.manager.enable()
+        self.background_color = COLOR_BACKGROUND_MENU
+        self.scroll_y = 0
+        self.icon_size = 80
+        self.selected_index = 0
+        self.achievement_height = 100
         
-        self.medal_gold_tex = arcade.load_texture(":resources:images/items/coinGold.png")
-        self.medal_silver_tex = arcade.load_texture(":resources:images/items/coinSilver.png")
-        self.medal_bronze_tex = arcade.load_texture(":resources:images/items/coinBronze.png")
-        self.medal_none_tex = arcade.load_texture(":resources:images/tiles/lockRed.png")
-
-        #main vertical box layout
-        self.v_box = arcade.gui.UIBoxLayout(vertical=True, space_between=8)
-
-        #title
-        title = arcade.gui.UILabel(
-            text="ACHIEVEMENTS",
-            text_color=arcade.color.GOLD,
-            font_size=22,
-            height=40,
+        self.title_text = arcade.Text(
+            "ACHIEVEMENTS",
+            SCREEN_WIDTH / 2,
+            SCREEN_HEIGHT - 60,
+            COLOR_TEXT,
+            font_size=50,
+            anchor_x="center",
             bold=True
         )
-        self.v_box.add(title)
+        
+        self.controls_text = arcade.Text(
+            "UP/DOWN: Navigate | ESC: Back",
+            SCREEN_WIDTH / 2,
+            30,
+            (150, 150, 150),
+            font_size=11,
+            anchor_x="center"
+        )
 
-        for ach in ACHIEVEMENT_LIST:
-            current_val = self.brain.achievements.achievement_progress(ach.name)
-            if current_val == 9999999: current_val = 0
-            
-            bronze_value, silver_value, gold_value = ach.tiers
-            medal_type, next_goal_text = self.brain.achievements.get_medal_info(ach.name)
-            medal_texture = self.medal_none_tex
-            target_val = bronze_value
-            if medal_type == "GOLD": 
-                medal_texture = self.medal_gold_tex
-                target_val = gold_value
-            elif medal_type == "SILVER": 
-                medal_texture = self.medal_silver_tex
-                target_val = gold_value
-            elif medal_type == "BRONZE": 
-                medal_texture = self.medal_bronze_tex
-                target_val = silver_value
-
-            row = arcade.gui.UIBoxLayout(vertical=False, space_between=20)
-            
-            #left : name and the next rank
-            current_val = round(current_val)
-            val_str = str(current_val)
-            target_str = str(target_val)
-            desc_text = f"{ach.description} - {val_str} / {target_str}"
-            
-            row = arcade.gui.UIBoxLayout(vertical=False, space_between=20)
-            text_column = arcade.gui.UIBoxLayout(vertical=True, space_between=4, align="left")
-
-            name_label = arcade.gui.UILabel(
-                text=ach.name,
-                text_color=arcade.color.DARK_VIOLET,
-                font_size=14,
-                width=450,
-                align="left",
-                bold=True
-            )
-            desc_label = arcade.gui.UILabel(
-                text=desc_text,
-                text_color=arcade.color.PLUM,
-                font_size=8,
-                width=450,
-                align="left"
-            )
-            text_column.add(name_label)
-            text_column.add(desc_label)
-            
-            row.add(text_column)
-            
-            if medal_texture:
-                icon = arcade.gui.UITextureButton(
-                    texture=medal_texture,
-                    width=24,
-                    height=24
-                )
-                row.add(icon)
-            row_wrapper = row.with_padding(top=5, bottom=5)            
-            self.v_box.add(row_wrapper)
-
-        self.v_box.add(arcade.gui.UILabel(text=" ", height=10))
-        self.v_box.add(arcade.gui.UILabel(text="Press ESC to return", text_color=arcade.color.GRAY, font_size=12))
-
-        anchor = arcade.gui.UIAnchorLayout()
-        anchor.add(self.v_box, anchor_x="center_x", anchor_y="center_y")
-        self.manager.add(anchor)
-
+        # Get user achievements
+        self.achievements = self.brain.achievement_manager.get_user_achievements(
+            self.brain.username
+        )
+        
+    def on_show_view(self):
+        arcade.set_background_color(self.background_color)
+    
     def on_draw(self):
         self.clear()
-        bg_rect = arcade.rect.XYWH(0, 0, self.window.width, self.window.height)
-        arcade.draw_rect_filled(bg_rect, (20, 20, 30))
-        self.manager.draw()
+        
+        # Draw title
+        self.title_text.draw()
+        
+        # Calculate visible area
+        visible_start = max(0, int(self.scroll_y / self.achievement_height))
+        visible_end = min(len(self.achievements), visible_start + 5)
+        
+        y_pos = SCREEN_HEIGHT - 140
+        for i in range(visible_start, visible_end):
+            achievement = self.achievements[i]
+            
+            # Highlight selected
+            if i == self.selected_index:
+                rect = arcade.rect.XYWH(SCREEN_WIDTH / 2, y_pos - 40, SCREEN_WIDTH - 40, self.achievement_height)
+                arcade.draw_rect_filled(rect, (50, 50, 80))
+            
+            # Draw icon
+            try:
+                icon_path = f"assets/achievement_icons/{achievement.name}.png"
+                icon = arcade.load_texture(icon_path)
+                arcade.draw_texture_rect(
+                    icon, 
+                    arcade.rect.XYWH(30 + self.icon_size/2, y_pos - self.icon_size/2, self.icon_size, self.icon_size)
+                )
+            except Exception:
+                # Placeholder
+                rect_outline = arcade.rect.XYWH(30 + self.icon_size // 2, y_pos - self.icon_size // 2, self.icon_size, self.icon_size)
+                arcade.draw_rect_outline(rect_outline, (150, 150, 150), border_width=2)
+            
+            title_text_str = achievement.name
+            if achievement.is_unlocked():
+                tier_name = achievement.get_tier_name(achievement.unlockedTier)
+                title_text_str += f" [{tier_name}]"
+                color = (255, 215, 0) if achievement.unlockedTier.name == "GOLD" else \
+                        (192, 192, 192) if achievement.unlockedTier.name == "SILVER" else \
+                        (205, 127, 50)
+            else:
+                color = (100, 100, 100)
+
+            arcade.draw_text(title_text_str, 130, y_pos - 10, color, 14, bold=True)
+            
+            description = self._format_description(achievement)
+            
+            arcade.draw_text(
+                description, 130, y_pos - 40, 
+                (180, 180, 180) if achievement.is_unlocked() else (100, 100, 100),
+                font_size=11, width=int(SCREEN_WIDTH - 170), multiline=True
+            )
+            
+            y_pos -= self.achievement_height
+        
+        self.controls_text.draw()
 
     def on_key_press(self, symbol, modifiers):
         if symbol == arcade.key.ESCAPE:
             self.brain.set_state("MENU")
-
-    def on_hide_view(self):
-        self.manager.disable()
+        
+        elif symbol == arcade.key.UP:
+            self.selected_index = max(0, self.selected_index - 1)
+            self.scroll_y = max(0, self.scroll_y - self.achievement_height)
+        
+        elif symbol == arcade.key.DOWN:
+            self.selected_index = min(len(self.achievements) - 1, self.selected_index + 1)
+            self.scroll_y = min(
+                (len(self.achievements) - 5) * self.achievement_height,
+                self.scroll_y + self.achievement_height
+            )
+    
+    def _format_description(self, achievement):
+        if not achievement.is_unlocked():
+            return f"Bronze Requirement - {achievement.get_description_for_tier(AchievementTier.BRONZE)}"
+        if achievement.unlockedTier == AchievementTier.BRONZE:
+            return f"Silver Requirement - {achievement.get_description_for_tier(AchievementTier.SILVER)}"
+        if achievement.unlockedTier == AchievementTier.SILVER:
+            return f"Gold Requirement - {achievement.get_description_for_tier(AchievementTier.GOLD)}"
+        return achievement.get_description_for_tier(AchievementTier.GOLD)

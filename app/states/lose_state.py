@@ -9,6 +9,8 @@ class LoseState(arcade.View):
         self.camera.bottom_left = (0, 0)
         
         self.window.background_color = (20, 0, 0)
+        
+        self.is_new_high_score = self.brain.save_score(is_win=False, player=self.brain.player)
 
     def on_draw(self):
         self.clear()
@@ -20,17 +22,28 @@ class LoseState(arcade.View):
         #title
         arcade.draw_text(
             "YOU DIED",
-            x=cx, y=cy + 80,
+            x=cx, y=cy + 100,
             color=arcade.color.RED,
             font_size=60,
             anchor_x="center",
             bold=True
         )
 
+        # Afișează "NEW HIGH SCORE!" doar dacă e cazul
+        if self.is_new_high_score:
+            arcade.draw_text(
+                "NEW HIGH SCORE!",
+                x=cx, y=cy + 40,
+                color=arcade.color.CYAN,
+                font_size=24,
+                anchor_x="center",
+                bold=True
+            )
+
         #final score
         arcade.draw_text(
             f"Final Score: {int(self.brain.score)}",
-            x=cx, y=cy,
+            x=cx, y=cy - 20,
             color=COLOR_TEXT,
             font_size=30,
             anchor_x="center"
@@ -39,7 +52,7 @@ class LoseState(arcade.View):
         #next step instruction to replay
         arcade.draw_text(
             "Press [R] to Play Again",
-            x=cx, y=cy - 80,
+            x=cx, y=cy - 100,
             color=arcade.color.YELLOW,
             font_size=20,
             anchor_x="center"

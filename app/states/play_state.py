@@ -7,7 +7,7 @@ from app.pve_logic.collision import PhysicsHandler
 from app.pve_logic.combat import CombatSystem
 from app.pve_logic.spawning import Spawner
 from app.ui.hud import HUD
-from storage.authentification import AuthentificationManager
+from app.achievements.achievement import AchievementTier
 
 class PlayState(arcade.View):
     def __init__(self, brain):
@@ -15,28 +15,30 @@ class PlayState(arcade.View):
         self.brain = brain
         self.player_list = arcade.SpriteList()
         self.enemy_list = arcade.SpriteList()
-        self.authentificator = AuthentificationManager()
+        self.entity_list = arcade.SpriteList()
         #initializing player
         character = getattr(self.brain, 'selected_character', 'knight')
         self.player = Player(character)
-        self.player.center_x = SCREEN_WIDTH // 2
-        self.player.center_y = SCREEN_HEIGHT // 2
+        self.player.center_x = 2500
+        self.player.center_y = 7500
         self.player_list.append(self.player)
-        self.traveled_distance = 0
-        self.tanked_damage = 0
+        self.entity_list.append(self.player)
+
         #loading map
-        self.tilemap = load_game_map()
+        if self.brain.current_map is None:
+            self.brain.current_map = load_game_map()
+        self.tilemap = self.brain.current_map
         self.scene = self.tilemap.scene
 
         #loading walls
-        self.wall_list = self.scene.get_sprite_list("Walls")
+        self.wall_list = self.tilemap.get_walls()
 
         #initializing physics logic
         self.physics_handler = PhysicsHandler(self.player, self.wall_list)
 
         #combat and spawner logic
         self.combat_system = CombatSystem()
-        #TODO: the spawning base interval can be changed here
+
         self.spawner = Spawner(self.tilemap.width, self.tilemap.height, self.player, 10, self)
         #initializing HUD
         self.hud = HUD()
@@ -51,7 +53,9 @@ class PlayState(arcade.View):
 
         self.game_over = False
         self.wave_info = self.spawner.get_wave_info()
-        #TODO add ui text : game started and maybe some basic instructions
+        self.current_attack_kills = 0
+        self.session_enemies_killed = 0
+        self.last_wave = 0
 
     def on_show_view(self):
         arcade.set_background_color(arcade.color.DARK_PASTEL_RED)
@@ -67,30 +71,57 @@ class PlayState(arcade.View):
         self.physics_handler.update()
         self.player_list.update(delta_time)
         self.player_list.update_animation(delta_time)
-        self.traveled_distance += (self.player.change_x**2 + self.player.change_y**2)**0.5
+
+        if self.player.is_dead and self.player.animation_finished and self.player.death_hold_time <= 0:
+            self.game_over = True
+
         dead_enemies = []
-        past_hp = self.player.current_hp
         for enemy in self.enemy_list:
+            was_attacking = enemy.is_attacking
+            
             can_attack = enemy.update(delta_time, self.player)
             
-            if can_attack:
-                self.combat_system.enemy_attack_player(enemy, self.player)
-
-                if self.player.current_hp <= 0:
-                    self.game_over = True
+            if enemy.is_attacking and not was_attacking:
+                self.combat_system.on_enemy_attack_start(enemy)
             
-            if enemy.current_hp <= 0:
+            if enemy.is_attacking:
+                hit_player = self.combat_system.process_enemy_attack(
+                    enemy, self.player, enemy.current_attack_type
+                )
+
+            if enemy.is_dead and enemy.animation_finished and enemy.death_hold_time <= 0:
                 dead_enemies.append(enemy)
-        self.tanked_damage += (past_hp - self.player.current_hp)
+
+        if self.player.is_attacking:
+            damaged = self.combat_system.process_player_attack(
+                self.player, self.enemy_list, self.player.current_attack_type
+            )
+            for enemy in damaged:
+                if enemy.current_hp <= 0:
+                    self.current_attack_kills += 1
+        else:
+            if self.current_attack_kills > 0:
+                self.check_killtacular_achievement(self.current_attack_kills)
+                self.current_attack_kills = 0
+
         for enemy in dead_enemies:
             xp_gained = self.combat_system.calculate_xp_gain(enemy.level, self.player.level)
             self.player.xp += xp_gained
-            #TODO this logic could be improved
             self.brain.score += xp_gained * 10 * random.uniform(0.85, 1.15)
-
-            #TODO maybe in a corner a small message can appear each time an enemy dies
             self.physics_handler.remove_enemy_hitbox(enemy)
+            self.spawner.on_enemy_killed()
+
+            dx = enemy.center_x - self.player.center_x
+            dy = enemy.center_y - self.player.center_y
+            distance = (dx * dx + dy * dy) ** 0.5
+            self.check_sniper_achievement(distance)
+            self.session_enemies_killed += 1
+            self.brain.session_enemies_killed += 1
+
             self.enemy_list.remove(enemy)
+            self.entity_list.remove(enemy)
+            if self.player.is_attacking:
+                self.current_attack_kills += 1
 
         self.enemy_list.update_animation()
 
@@ -100,20 +131,24 @@ class PlayState(arcade.View):
         self.spawner.update(delta_time, self.enemy_list)
         self.wave_info = self.spawner.get_wave_info()
 
+        if self.wave_info["wave"] > self.last_wave:
+            if self.last_wave > 0:  # Not first wave
+                self.player.reset_wave_damage()
+            self.last_wave = self.wave_info["wave"]
+
         self.center_camera_to_player()
         self.brain.enemies = self.enemy_list
 
         if self.spawner.wave > NUMBER_OF_WAVES:
             is_high_score = self.brain.score > self.brain.high_score
-            self.brain.new_score(self.brain.score)
-            #for Achievements
-            self.brain.achievements.update("Game Veteran", self.brain.game_time / 3600.0)
-            self.brain.achievements.update("Distance Traveled", self.traveled_distance)
-            self.brain.achievements.update("Game Master", self.brain.score)
-            self.brain.achievements.update("Barely Alive", self.player.current_hp)
-            self.brain.achievements.update("Total Winner", 1)
-            self.brain.achievements.update("Speed Runner", self.brain.game_time)
-            self.brain.achievements.update("Super Tank", self.tanked_damage)
+            
+            health_percent = (self.player.current_hp / self.player.max_hp) * 100
+            self.check_barely_alive_achievement(health_percent)
+            
+            game_time_minutes = self.brain.game_time / 60.0
+            self.check_speedrunner_achievement(game_time_minutes)
+
+            self.check_flawless_victory_achievement(self.player.flawless_waves)
 
             self.brain.set_state("WIN", is_high_score)
 
@@ -132,22 +167,17 @@ class PlayState(arcade.View):
         self.camera_sprites.use()
         self.scene.draw()
         
-        self.player_list.draw()
-        self.enemy_list.draw()
+        self.entity_list.sort(key=lambda sprite: -(sprite.center_y - sprite.height // 2))
+        self.entity_list.draw()
         
         self.camera_gui.use()
         self.hud.draw(self.player, self.brain.score, self.wave_info, self.brain.game_time)
         if self.game_over:
-            #for Achievements
-            self.brain.achievements.update("Game Veteran", self.brain.game_time / 3600.0)
-            self.brain.achievements.update("Distance Traveled", self.traveled_distance)
-            self.brain.achievements.update("Super Tank", self.tanked_damage)
             self.brain.set_state("LOSE")
+
     def on_key_press(self, key, modifiers):
         self.keys_pressed.add(key)
-        max_range = 0
-        dead_cnt = 0
-        dead_list = []
+        
         # Player movement
         if key == arcade.key.W or key == arcade.key.UP:
             self.player.up_key = True
@@ -161,23 +191,15 @@ class PlayState(arcade.View):
         elif key == arcade.key.ESCAPE:
             self.brain.set_state("PAUSE")
         elif key == arcade.key.Z:
+            self.combat_system.on_player_attack_start()
             self.player.attack(1)
-            dead_list, max_range = self.combat_system.process_attack(self.player,self.enemy_list,self.physics_handler)
         elif key == arcade.key.X:
+            self.combat_system.on_player_attack_start()
             self.player.attack(2)
-            dead_list, max_range = self.combat_system.process_attack(self.player,self.enemy_list,self.physics_handler)
         elif key == arcade.key.C:
+            self.combat_system.on_player_attack_start()
             self.player.attack(3)
-            dead_list, max_range = self.combat_system.process_attack(self.player,self.enemy_list,self.physics_handler)
-        if dead_list:
-            dead_cnt = len(dead_list)
-        #for Achievements
-        if dead_cnt != 0:
-            self.brain.achievements.update("Multi Kill", dead_cnt)
-            self.brain.achievements.update("Total Killer", dead_cnt)
-        if max_range != 0:
-            self.brain.achievements.update("Sniper", max_range)
-
+    
     def on_key_release(self, key, modifiers):
         if key in self.keys_pressed:
             self.keys_pressed.remove(key)
@@ -190,3 +212,88 @@ class PlayState(arcade.View):
             self.player.left_key = False
         elif key == arcade.key.D or key == arcade.key.RIGHT:
             self.player.right_key = False
+
+    def check_barely_alive_achievement(self, health_percent):
+        achievement_name = "Barely Alive"
+        username = self.brain.username
+
+        if health_percent < 5:
+            unlocked = self.brain.achievement_manager.unlock_achievement(
+                username, achievement_name, AchievementTier.GOLD
+            )
+        elif health_percent < 10:
+            unlocked = self.brain.achievement_manager.unlock_achievement(
+                username, achievement_name, AchievementTier.SILVER
+            )
+        elif health_percent < 15:
+            unlocked = self.brain.achievement_manager.unlock_achievement(
+                username, achievement_name, AchievementTier.BRONZE
+            )
+
+    def check_killtacular_achievement(self, kills_count):
+        achievement_name = "Killtacular"
+        username = self.brain.username
+
+        if kills_count >= 7:
+            self.brain.achievement_manager.unlock_achievement(
+                username, achievement_name, AchievementTier.GOLD
+            )
+        elif kills_count >= 5:
+            self.brain.achievement_manager.unlock_achievement(
+                username, achievement_name, AchievementTier.SILVER
+            )
+        elif kills_count >= 3:
+            self.brain.achievement_manager.unlock_achievement(
+                username, achievement_name, AchievementTier.BRONZE
+            )
+
+    def check_sniper_achievement(self, distance):
+        achievement_name = "Sniper"
+        username = self.brain.username
+
+        if distance >= 80:
+            self.brain.achievement_manager.unlock_achievement(
+                username, achievement_name, AchievementTier.GOLD
+            )
+        elif distance >= 70:
+            self.brain.achievement_manager.unlock_achievement(
+                username, achievement_name, AchievementTier.SILVER
+            )
+        elif distance >= 60:
+            self.brain.achievement_manager.unlock_achievement(
+                username, achievement_name, AchievementTier.BRONZE
+            )
+
+    def check_speedrunner_achievement(self, minutes):
+        achievement_name = "Speedrunner"
+        username = self.brain.username
+
+        if minutes <= 4:
+            self.brain.achievement_manager.unlock_achievement(
+                username, achievement_name, AchievementTier.GOLD
+            )
+        elif minutes <= 5:
+            self.brain.achievement_manager.unlock_achievement(
+                username, achievement_name, AchievementTier.SILVER
+            )
+        elif minutes <= 6:
+            self.brain.achievement_manager.unlock_achievement(
+                username, achievement_name, AchievementTier.BRONZE
+            )
+
+    def check_flawless_victory_achievement(self, flawless_waves):
+        achievement_name = "Flawless Victory"
+        username = self.brain.username
+
+        if flawless_waves >= 5:
+            self.brain.achievement_manager.unlock_achievement(
+                username, achievement_name, AchievementTier.GOLD
+            )
+        elif flawless_waves >= 3:
+            self.brain.achievement_manager.unlock_achievement(
+                username, achievement_name, AchievementTier.SILVER
+            )
+        elif flawless_waves >= 2:
+            self.brain.achievement_manager.unlock_achievement(
+                username, achievement_name, AchievementTier.BRONZE
+            )
